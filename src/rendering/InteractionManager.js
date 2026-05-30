@@ -1,0 +1,147 @@
+/**
+ * InteractionManager - Handles mouse/touch input for panning, zooming and painting
+ */
+export class InteractionManager {
+  constructor(renderer, camera, canvas) {
+    this.renderer = renderer;
+    this.camera = camera;
+    this.canvas = canvas;
+    
+    this.isDragging = false;
+    this.isPainting = false;
+    this.lastX = 0;
+    this.lastY = 0;
+    this.touchStartDist = 0;
+    this.dragButton = null; // track which button started the drag (null | 0 = left | 1 = middle)
+    
+    this.setupEventListeners();
+  }
+
+  setupEventListeners() {
+    // Desktop Panning/Painting
+    this.canvas.addEventListener('mousedown', (e) => {
+      // Middle click (button === 1) should always start a pan.
+      // Left click + Shift also starts a pan. Left click alone is for painting.
+      if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+        this.isDragging = true;
+        this.dragButton = e.button;
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+        // Prevent default middle-click browser behavior (autoscroll)
+        if (e.button === 1) e.preventDefault();
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      // If a drag was initiated (either middle click or shift+left), pan regardless of current modifier keys.
+      if (this.isDragging) {
+        const dx = e.clientX - this.lastX;
+        const dy = e.clientY - this.lastY;
+        this.camera.x += dx / this.camera.zoom;
+        this.camera.y += dy / this.camera.zoom;
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      this.isDragging = false;
+      this.dragButton = null;
+    });
+
+    // Prevent context menu on middle-click drag start interfering
+    this.canvas.addEventListener('contextmenu', (e) => {
+      // allow normal context menu when not middle-dragging
+      if (this.dragButton === 1) e.preventDefault();
+    });
+
+    this.canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      this.camera.zoom *= zoomFactor;
+      this.camera.zoom = Math.max(0.05, Math.min(5, this.camera.zoom));
+    }, { passive: false });
+
+    // Mobile Panning/Zooming
+    this.canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        this.isDragging = true;
+        this.lastX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        this.lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        
+        const dx = e.touches[1].clientX - e.touches[0].clientX;
+        const dy = e.touches[1].clientY - e.touches[0].clientY;
+        this.touchStartDist = Math.sqrt(dx * dx + dy * dy);
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchmove', (e) => {
+      if (this.isDragging && e.touches.length === 2) {
+        e.preventDefault();
+        
+        const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        const dx = centerX - this.lastX;
+        const dy = centerY - this.lastY;
+        this.camera.x += dx / this.camera.zoom;
+        this.camera.y += dy / this.camera.zoom;
+        this.lastX = centerX;
+        this.lastY = centerY;
+        
+        const dx2 = e.touches[1].clientX - e.touches[0].clientX;
+        const dy2 = e.touches[1].clientY - e.touches[0].clientY;
+        const dist = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+        const zoomFactor = dist / (this.touchStartDist || 1);
+        this.camera.zoom *= zoomFactor;
+        this.camera.zoom = Math.max(0.05, Math.min(5, this.camera.zoom));
+        this.touchStartDist = dist;
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchend', () => {
+      this.isDragging = false;
+    });
+  }
+
+  handlePaint(clientX, clientY, grid, gameState, simulationEngine) {
+    const rect = this.canvas.getBoundingClientRect();
+    const worldPos = this.camera.screenToWorld(
+      clientX - rect.left, 
+      clientY - rect.top, 
+      this.canvas.width, 
+      this.canvas.height
+    );
+    
+    const isVoronoiGrid = grid.getCellAt !== undefined;
+    let cell;
+    
+    if (isVoronoiGrid) {
+      cell = grid.getCellAt(worldPos.x, worldPos.y);
+    } else {
+      const hex = grid.pixelToHex(worldPos.x, worldPos.y, gameState.hexRotation);
+      cell = grid.getCell(hex.q, hex.r);
+    }
+    
+    if (cell) {
+      if (gameState.paintMode === 'land') {
+        cell.type = 'land';
+        cell.isClaimable = true;
+      } else if (gameState.paintMode === 'ocean') {
+        cell.type = 'ocean';
+        cell.isClaimable = false;
+        cell.factionId = null;
+        cell.clearAllInfluence();
+      } else if (gameState.paintMode === 'faction') {
+        const factionId = gameState.selectedPaintFaction;
+        cell.type = 'land';
+        cell.isClaimable = true;
+        cell.setFaction(factionId);
+        cell.clearAllInfluence();
+        
+        if (simulationEngine && simulationEngine.influenceSystem) {
+          simulationEngine.influenceSystem.activeCells.add(cell);
+        }
+      }
+    }
+  }
+}

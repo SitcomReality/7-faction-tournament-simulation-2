@@ -1,0 +1,373 @@
+/**
+ * RelationshipGraph - Interactive visualization of faction relationships
+ */
+export class RelationshipGraph {
+  constructor(container, gameState, tournamentGraph) {
+    this.container = container;
+    this.gameState = gameState;
+    this.tournamentGraph = tournamentGraph;
+    
+    this.canvas = null;
+    this.ctx = null;
+    this.size = 260; // Slightly smaller to fit UI panel padding
+    this.centerX = this.size / 2;
+    this.centerY = this.size / 2;
+    this.radius = 85;
+    this.nodeRadius = 22;
+    
+    this.dragStart = null;
+    this.dragCurrent = null;
+    this.hoveredNode = null;
+    
+    this.history = [];
+    this.maxHistory = 20;
+    
+    this.createUI();
+    this.setupEventListeners();
+    this.render();
+  }
+
+  createUI() {
+    this.container.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <canvas id="relationship-canvas" width="${this.size}" height="${this.size}" 
+                style="border-radius: 8px; background: rgba(0,0,0,0.3); cursor: crosshair; touch-action: none;"></canvas>
+        
+        <div style="display: flex; gap: 6px;">
+          <button id="graph-shuffle-btn" style="flex: 1; padding: 8px; font-size: 10px;">🎲 Shuffle</button>
+          <button id="graph-undo-btn" style="flex: 1; padding: 8px; font-size: 10px;">↶ Undo</button>
+          <button id="graph-reset-btn" style="flex: 1; padding: 8px; font-size: 10px;">⟲ Reset</button>
+        </div>
+        
+        <div style="font-size: 10px; opacity: 0.6; text-align: center;">
+          Drag from faction to faction to set dominance
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 8px 0;">
+
+        <div class="theme-row" style="margin-top: 0; padding-top: 0; border-top: none;">
+          <select id="theme-select" title="Theme">
+            <option value="default" ${this.gameState.currentTheme === 'default' ? 'selected' : ''}>Default</option>
+            <option value="cyberpunk" ${this.gameState.currentTheme === 'cyberpunk' ? 'selected' : ''}>Cyberpunk</option>
+            <option value="pastel" ${this.gameState.currentTheme === 'pastel' ? 'selected' : ''}>Pastel</option>
+          </select>
+          <button id="shuffle-colors-btn" title="Shuffle Colors">🎲</button>
+        </div>
+      </div>
+    `;
+    
+    this.canvas = this.container.querySelector('#relationship-canvas');
+    this.ctx = this.canvas.getContext('2d');
+  }
+
+  setupEventListeners() {
+    // Mouse events
+    this.canvas.addEventListener('mousedown', (e) => this.handleStart(e.offsetX, e.offsetY));
+    this.canvas.addEventListener('mousemove', (e) => this.handleMove(e.offsetX, e.offsetY));
+    this.canvas.addEventListener('mouseup', (e) => this.handleEnd(e.offsetX, e.offsetY));
+    this.canvas.addEventListener('mouseleave', () => this.handleCancel());
+    
+    // Touch events
+    this.canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const rect = this.canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      this.handleStart(touch.clientX - rect.left, touch.clientY - rect.top);
+    });
+    
+    this.canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const rect = this.canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      this.handleMove(touch.clientX - rect.left, touch.clientY - rect.top);
+    });
+    
+    this.canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      if (this.dragCurrent) {
+        this.handleEnd(this.dragCurrent.x, this.dragCurrent.y);
+      }
+    });
+    
+    // Buttons
+    this.container.querySelector('#graph-shuffle-btn').addEventListener('click', () => this.shuffle());
+    this.container.querySelector('#graph-undo-btn').addEventListener('click', () => this.undo());
+    this.container.querySelector('#graph-reset-btn').addEventListener('click', () => this.reset());
+
+    // Theme controls
+    const shuffleBtn = this.container.querySelector('#shuffle-colors-btn');
+    shuffleBtn.addEventListener('click', () => {
+      this.gameState.shuffleFactionColors();
+    });
+    
+    const themeSelect = this.container.querySelector('#theme-select');
+    themeSelect.addEventListener('change', (e) => {
+      this.gameState.setTheme(e.target.value);
+    });
+  }
+
+  saveHistory() {
+    const state = this.tournamentGraph.dominanceMatrix.map(row => [...row]);
+    this.history.push(state);
+    if (this.history.length > this.maxHistory) {
+      this.history.shift();
+    }
+  }
+
+  handleStart(x, y) {
+    const node = this.getNodeAt(x, y);
+    if (node !== null) {
+      this.dragStart = node;
+      this.dragCurrent = { x, y };
+      this.render();
+    }
+  }
+
+  handleMove(x, y) {
+    this.hoveredNode = this.getNodeAt(x, y);
+    
+    if (this.dragStart !== null) {
+      this.dragCurrent = { x, y };
+    }
+    
+    this.render();
+  }
+
+  handleEnd(x, y) {
+    if (this.dragStart !== null) {
+      const endNode = this.getNodeAt(x, y);
+      
+      if (endNode !== null && endNode !== this.dragStart) {
+        this.saveHistory();
+        this.setRelationship(this.dragStart, endNode);
+      }
+    }
+    
+    this.dragStart = null;
+    this.dragCurrent = null;
+    this.render();
+  }
+
+  handleCancel() {
+    this.dragStart = null;
+    this.dragCurrent = null;
+    this.hoveredNode = null;
+    this.render();
+  }
+
+  setRelationship(winner, loser) {
+    // Set winner beats loser
+    this.tournamentGraph.dominanceMatrix[winner][loser] = true;
+    this.tournamentGraph.dominanceMatrix[loser][winner] = false;
+    this.render();
+  }
+
+  getNodeAt(x, y) {
+    for (let i = 0; i < 7; i++) {
+      const pos = this.getNodePosition(i);
+      const dx = x - pos.x;
+      const dy = y - pos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist < this.nodeRadius) {
+        return i;
+      }
+    }
+    return null;
+  }
+
+  getNodePosition(index) {
+    const angle = (index / 7) * Math.PI * 2 - Math.PI / 2;
+    return {
+      x: this.centerX + Math.cos(angle) * this.radius,
+      y: this.centerY + Math.sin(angle) * this.radius
+    };
+  }
+
+  render() {
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, this.size, this.size);
+    
+    const activeNode = this.dragStart !== null ? this.dragStart : this.hoveredNode;
+    const highlightedEdges = [];
+    const normalEdges = [];
+
+    // Categorize edges to ensure highlighted ones are drawn on top
+    for (let i = 0; i < 7; i++) {
+      for (let j = 0; j < 7; j++) {
+        if (i !== j && this.tournamentGraph.dominanceMatrix[i][j]) {
+          if (activeNode !== null && (i === activeNode || j === activeNode)) {
+            highlightedEdges.push([i, j]);
+          } else {
+            normalEdges.push([i, j]);
+          }
+        }
+      }
+    }
+
+    // Draw edges
+    for (const [i, j] of normalEdges) {
+      this.drawEdge(i, j);
+    }
+    for (const [i, j] of highlightedEdges) {
+      this.drawEdge(i, j);
+    }
+    
+    // Draw drag line
+    if (this.dragStart !== null && this.dragCurrent) {
+      const startPos = this.getNodePosition(this.dragStart);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(startPos.x, startPos.y);
+      ctx.lineTo(this.dragCurrent.x, this.dragCurrent.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Draw arrow at cursor if over a node
+      if (this.hoveredNode !== null && this.hoveredNode !== this.dragStart) {
+        const endPos = this.getNodePosition(this.hoveredNode);
+        this.drawArrowHead(this.dragCurrent.x, this.dragCurrent.y, endPos.x, endPos.y, 'rgba(76, 175, 80, 0.8)');
+      }
+    }
+    
+    // Draw nodes
+    for (let i = 0; i < 7; i++) {
+      this.drawNode(i);
+    }
+  }
+
+  drawNode(index) {
+    const pos = this.getNodePosition(index);
+    const color = this.gameState.theme.factions[index];
+    const ctx = this.ctx;
+    
+    const isHovered = this.hoveredNode === index;
+    const isDragStart = this.dragStart === index;
+    
+    // Glow
+    if (isHovered || isDragStart) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 15;
+    }
+    
+    // Circle
+    ctx.fillStyle = color;
+    ctx.strokeStyle = isDragStart ? '#fff' : 'rgba(0, 0, 0, 0.5)';
+    ctx.lineWidth = isDragStart ? 3 : 2;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, this.nodeRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    ctx.shadowBlur = 0;
+    
+    // Label
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 14px Space Mono';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(index.toString(), pos.x, pos.y);
+  }
+
+  drawEdge(from, to) {
+    const fromPos = this.getNodePosition(from);
+    const toPos = this.getNodePosition(to);
+    
+    // Calculate shortened line (stop at node edge)
+    const dx = toPos.x - fromPos.x;
+    const dy = toPos.y - fromPos.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const ratio = (dist - this.nodeRadius) / dist;
+    
+    const endX = fromPos.x + dx * ratio;
+    const endY = fromPos.y + dy * ratio;
+    
+    const ctx = this.ctx;
+    
+    // Determine highlighting based on interaction
+    const activeNode = this.dragStart !== null ? this.dragStart : this.hoveredNode;
+    let edgeColor = 'rgba(255, 255, 255, 0.2)';
+    let arrowColor = 'rgba(255, 255, 255, 0.4)';
+    let lineWidth = 1;
+
+    if (activeNode !== null) {
+      if (from === activeNode) {
+        // Active node wins -> Positive (Green)
+        edgeColor = '#4CAF50';
+        arrowColor = '#4CAF50';
+        lineWidth = 2;
+      } else if (to === activeNode) {
+        // Active node loses -> Negative (Red)
+        edgeColor = '#FF5252';
+        arrowColor = '#FF5252';
+        lineWidth = 2;
+      }
+    }
+
+    ctx.strokeStyle = edgeColor;
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+    ctx.moveTo(fromPos.x, fromPos.y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    
+    // Arrow head pointing at loser
+    this.drawArrowHead(fromPos.x, fromPos.y, endX, endY, arrowColor);
+  }
+
+  drawArrowHead(fromX, fromY, toX, toY, color) {
+    const ctx = this.ctx;
+    const headLen = 8;
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+    
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(
+      toX - headLen * Math.cos(angle - Math.PI / 6),
+      toY - headLen * Math.sin(angle - Math.PI / 6)
+    );
+    ctx.lineTo(
+      toX - headLen * Math.cos(angle + Math.PI / 6),
+      toY - headLen * Math.sin(angle + Math.PI / 6)
+    );
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  shuffle() {
+    this.saveHistory();
+    
+    // Create random tournament graph
+    const matrix = Array(7).fill(null).map(() => Array(7).fill(false));
+    
+    for (let i = 0; i < 7; i++) {
+      for (let j = i + 1; j < 7; j++) {
+        if (Math.random() < 0.5) {
+          matrix[i][j] = true;
+        } else {
+          matrix[j][i] = true;
+        }
+      }
+    }
+    
+    this.tournamentGraph.dominanceMatrix = matrix;
+    this.render();
+  }
+
+  undo() {
+    if (this.history.length > 0) {
+      const prevState = this.history.pop();
+      this.tournamentGraph.dominanceMatrix = prevState;
+      this.render();
+    }
+  }
+
+  reset() {
+    this.saveHistory();
+    this.tournamentGraph.dominanceMatrix = this.tournamentGraph.createDefaultGraph();
+    this.render();
+  }
+}
