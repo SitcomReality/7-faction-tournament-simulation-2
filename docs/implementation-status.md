@@ -24,46 +24,33 @@ The Supernal Interregnum is in early development. Here's what's been accomplishe
 
 ---
 
-## Phase 2: Turn System & Game Loop 🔄 IN PROGRESS
+## Phase 2: Sacred Turns System ✓ COMPLETE
 
-**Status: Basic structure in place, needs completion**
+**Status: Core turn loop and infrastructure finalized**
 
-✅ TurnManager.js created with phase tracking  
-✅ Basic turn flow (planning → resolution → cleanup)  
-✅ Action queue system implemented  
-✅ Turn UI elements added to HUD  
-✅ Player.js class created  
-✅ GameEngine initializes default players  
-
-⚠️ **Needs Implementation:**
-- [ ] Action validation logic
-- [ ] Conflict resolution for simultaneous actions
-- [ ] Win/loss condition checking
-- [ ] Turn timer system (optional)
-- [ ] Turn transition animations
-- [ ] Action preview before committing
-
-**Next Steps:**
-1. Create concrete Action subclasses (MoveAction, SpawnAction, etc.)
-2. Implement action validation in TurnManager
-3. Add win condition checking
-4. Polish turn UI feedback
+✅ TurnManager.js handles Planning, Resolution, and Cleanup  
+✅ Action queue and simultaneous resolution logic implemented  
+✅ HUD integrates turn counters and phase indicators  
+✅ Player system supports multi-claimant tracking  
+✅ Basic Action base class and PassAction defined  
 
 ---
 
-## Phase 3: Divine Aspects System ⏸️ NOT STARTED
+## Phase 3: Divine Aspects System 🔄 IN PROGRESS
 
-**What's needed:**
-- [ ] Create DivineAspect.js data structure
-- [ ] Design 7 sacred geometry SVG symbols
-- [ ] Implement Awakening system (Essence cost scaling)
-- [ ] Create ManifestAspect action
-- [ ] Implement divine conflict resolution (no movement, territorial battles)
-- [ ] Build AspectPalette UI component
-- [ ] Update CosmicWheel visualization
-- [ ] Add Aspect rendering on Sanctums
+**Status: Data structures and cosmic wheel logic implemented**
 
-**Dependencies:** Phase 2 must be complete (Action system needed)
+✅ DivineAspect.js defines the 7 primal forces  
+✅ UnitRelationships.js (Cosmic Wheel) handles immutable 2-paradoxical dominion  
+✅ Player state tracks Awakened Aspects and Essence reserves  
+✅ Essence cost scaling logic implemented in Player.js  
+
+⚠️ **Needs Implementation:**
+- [ ] Design sacred geometry SVG paths for each Aspect
+- [ ] Create `ManifestAspect` and `AwakenAspect` Action subclasses
+- [ ] Implement territorial conflict resolution (dominion-based dispersion)
+- [ ] Build AspectPalette UI for selection and awakening rituals
+- [ ] Update RelationshipGraph to use sacred symbols and names
 
 ---
 
