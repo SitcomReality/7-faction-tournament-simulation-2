@@ -4,6 +4,7 @@
  */
 
 import { UnitRelationships } from './core/UnitRelationships.js';
+import { ASPECTS } from './core/DivineAspect.js';
 import { GameState } from './core/GameState.js';
 import { HexGrid } from './grid/HexGrid.js';
 import { TriangularGrid } from './grid/TriangularGrid.js';
@@ -134,9 +135,14 @@ document.addEventListener('DOMContentLoaded', () => {
     unitRelationships,
     gameEngine,
     renderer,
+    aspects: ASPECTS,
     setupWorld,
     stats: () => {
       console.log('Total cells:', grid.cells.size);
+      console.log('Players:', gameState.players.length);
+      gameState.players.forEach(p => {
+        console.log(`  ${p.name}: ${p.essence} essence, aspects:`, [...p.awakenedAspects]);
+      });
     }
   };
 });

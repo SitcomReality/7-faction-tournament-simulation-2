@@ -29,7 +29,7 @@ export class RelationshipGraph {
                 style="border-radius: 8px; background: rgba(0,0,0,0.3); cursor: default; touch-action: none;"></canvas>
         
         <div style="font-size: 10px; opacity: 0.6; text-align: center;">
-          Unit Relationships (Read-Only)
+          The Cosmic Wheel (Immutable)
         </div>
 
         <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 8px 0;">
