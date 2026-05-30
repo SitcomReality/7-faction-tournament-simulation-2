@@ -1,6 +1,8 @@
 /**
  * InteractionManager - Handles mouse/touch input for panning, zooming and painting
  */
+import { ManifestAction } from '../core/Action.js';
+
 export class InteractionManager {
   constructor(renderer, camera, canvas) {
     this.renderer = renderer;
@@ -119,7 +121,6 @@ export class InteractionManager {
       // If an aspect is selected, queue a manifestation action instead of painting
       if (gameState.selectedAspect !== null) {
         const player = gameState.players[gameState.activePlayer];
-        const { ManifestAction } = await import('../core/Action.js');
         const action = new ManifestAction(player.id, gameState.selectedAspect, coords.q, coords.r);
         
         if (gameEngine.queueAction(player.id, action)) {

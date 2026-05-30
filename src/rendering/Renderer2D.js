@@ -4,6 +4,7 @@
 import { Camera } from './Camera.js';
 import { HexRenderer } from './HexRenderer.js';
 import { InteractionManager } from './InteractionManager.js';
+import { ASPECTS } from '../core/DivineAspect.js';
 
 export class Renderer2D {
   constructor(canvas, fxCanvas) {
@@ -158,11 +159,10 @@ export class Renderer2D {
   }
 
   drawUnit(ctx, x, y, aspectId) {
-    const { ASPECTS } = await import('../core/DivineAspect.js');
     const aspect = ASPECTS[aspectId];
     if (!aspect) return;
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.font = 'bold 16px Space Mono';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
