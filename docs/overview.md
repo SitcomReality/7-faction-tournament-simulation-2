@@ -1,81 +1,94 @@
-# Game Design Implementation Overview
+# The Supernal Interregnum: Design Overview
 
-## Project Vision
-Transform the 7-faction simulation into a turn-based strategy game combining territorial control, unit relationships, and strategic depth.
+## Setting
+In the aftermath of the Godsfall, seven Divine Aspects remain scattered across the shattered realm. Ancient pantheons have crumbled, and mortal champions now vie to claim the fragments of divine power, seeking to ascend or restore the cosmic order.
 
 ## Core Concepts
 
-### The 7 Units/Powers
-Seven unique units with a 2-paradoxical tournament relationship structure. Each has:
-- Unique SVG symbol
-- Distinct color (separate from player colors)
-- Clear win/loss relationships via the graph
-- Specific role or strength in gameplay
+### The Seven Divine Aspects
+Seven primal forces with cosmic opposition embedded in their nature. Each Aspect:
+- Manifests through unique sacred geometry (SVG symbol)
+- Resonates with a specific color of divine light
+- Forms natural dominion over two others while yielding to two others (2-paradoxical cosmic wheel)
+- Grants unique tactical advantages when invoked
 
-### Player System
-1-7 players competing for territorial control:
-- Each player has their own color (distinct from unit colors)
-- Players start with 3 unlocked units (same 3 for all, forming R-P-S)
-- Players unlock additional units during gameplay
-- Victory through territorial dominance or other conditions
+**The Aspects:**
+1. **Radiance** (Light/Sun) - Pierces shadow, blinds storm
+2. **Umbra** (Shadow/Moon) - Smothers radiance, drowns earth  
+3. **Tempest** (Storm/Sky) - Scatters fire, erodes earth
+4. **Terra** (Earth/Stone) - Grounds tempest, ossifies tide
+5. **Pyre** (Fire/Forge) - Consumes umbra, evaporates tide
+6. **Tide** (Water/Sea) - Quenches pyre, reflects radiance
+7. **Aether** (Void/Stars) - Absorbs terra, disperses tempest
 
-### Turn-Based Gameplay
-- Players take turns planning actions
-- Actions resolve simultaneously or sequentially
-- Clear turn phases: Planning, Resolution, Cleanup
-- No real-time state changes between turns
+### The Claimant Houses
+1-7 divine champions or fallen houses competing to restore cosmic balance:
+- Each Claimant bears a unique sigil and divine bloodline
+- All begin with the Triad of Foundation (Aspects 0, 1, 2 - an eternal cycle)
+- Claimants Awaken additional Aspects by claiming Sanctums and performing Rites
+- Victory through Ascension: controlling enough sacred sites to channel all Seven Aspects
 
-### Fog of War
-- Players see only what they've explored
-- Vision based on owned territories and units
-- Creates opportunities for strategy and surprise
-- Encourages exploration and scouting
+### Sacred Turns & Divine Invocation
+- **Planning Phase**: Claimants commune with their Aspects, channeling divine will
+- **Resolution Phase**: The cosmic wheel turns; all wills manifest simultaneously
+- **Consecration Phase**: New territories are sanctified, divine essence flows
+- Reality remains static between turns - only mortal will shapes destiny
+
+### The Veil of Knowing
+- Claimants perceive only what their Sanctums reveal
+- Vision emanates from consecrated ground and manifested Aspects
+- Unexplored lands remain shrouded in primordial mist
+- Once glimpsed, the memory of sacred geography persists
 
 ## Implementation Phases
 
 Phase 1: Architecture Refactor
-Remove simulation systems, simplify for turn-based gameplay.
+Remove simulation systems, establish core structure for turn-based divine strategy.
 
-Phase 2: Turn System
-Implement turn management and basic game loop.
+Phase 2: Sacred Turns System  
+Implement turn management with Planning/Resolution/Consecration phases.
 
-Phase 3: Unit/Power System
-Create the 7 units with relationships and unlocking.
+Phase 3: Divine Aspects System
+Create the 7 Aspects with cosmic relationships, manifestation, and Awakening mechanics.
 
-Phase 4: Player System
-Add multi-player support and territory ownership.
+Phase 4: Claimant Houses System
+Add multi-player support, House identities, and Sanctum control.
 
-Phase 5: Fog of War
-Implement visibility and exploration mechanics.
+Phase 5: The Veil of Knowing
+Implement fog of war as limited divine perception.
 
-Phase 6: AI System
-Create computer opponents with difficulty settings.
+Phase 6: AI Claimants
+Create computer-controlled Houses with difficulty-based divine wisdom.
 
-Phase 7: Visual Polish
-Design distinctive art style and satisfying animations.
+Phase 7: Visual Manifestation
+Design sacred geometry symbols, divine light effects, and satisfying Aspect animations.
 
-Phase 8: Configuration & Multiplayer
-Comprehensive setup options and online multiplayer prep.
+Phase 8: Ritual Configuration
+Comprehensive game setup and preparation for online sacred duels.
 
 ## Visual Design Goals
 
-### Color Coordination
-Three distinct color systems that work together:
-1. Unit colors (7 thematic colors for units)
-2. Player colors (7 distinct colors for player territories)
-3. UI colors (background, panels, accents)
+### Divine Light Palette
+Three distinct color systems embodying the sacred:
+1. **Aspect Colors**: 7 colors representing divine forces (cosmic wheel gradient)
+2. **House Sigils**: 7 distinct colors marking Claimant territories  
+3. **Sacred Interface**: Dark void background with glowing divine UI elements
 
-### Visual Communication
-- Instant recognition of unit types
-- Clear territory ownership
-- Obvious valid moves/actions
-- Satisfying feedback for all interactions
+### Visual Communication of the Divine
+- Instant recognition of Aspect symbols through sacred geometry
+- Clear House territory control via sigil colors
+- Divine Veil rendered as primordial darkness
+- Glowing consecration effects when manifesting Aspects
+- Satisfying divine radiance when Awakening new powers
 
-### Art Style Direction
-Stylized, geometric, clean. Similar to games like:
-- Into the Breach (clarity and polish)
-- Advance Wars (unit distinction and charm)
-- Civilization (strategic depth presentation)
+### Art Style: Sacred Geometry
+Mystical, geometric, ethereal. Visual references:
+- **Hades** (divine glow effects and UI)
+- **Into the Breach** (clarity of tactical choices)
+- **Slay the Spire** (sacred symbols and clean presentation)
+- **Gris** (minimalist beauty and color theory)
+
+The aesthetic should evoke ancient star charts, alchemical diagrams, and sacred mandalas.
 
 ## Technical Considerations
 
@@ -99,15 +112,29 @@ Each must work consistently with all game systems.
 - State synchronization
 - Action validation
 
-## Success Criteria
+## Success Criteria: Achieving Divine Resonance
 
-A successful implementation will:
-- Be immediately understandable to new players
-- Provide strategic depth for experienced players
-- Run smoothly on various devices
-- Support both single-player and multiplayer
-- Feel polished and professional
-- Encourage replayability through variety and unlocks
+A worthy manifestation of the Supernal Interregnum will:
+- **Teach the Cosmic Wheel Naturally**: New Claimants understand Aspect relationships within 2-3 turns
+- **Reward Mastery**: Experienced players discover deep strategic interactions in the divine dance
+- **Run Across Realms**: Smooth performance on tablets, phones, and sacred browser windows
+- **Support Sacred Duels**: Both solo practice against AI and multiplayer consecration
+- **Feel Transcendent**: Polished divine effects that make each manifestation satisfying
+- **Inspire Repeated Communion**: Varied map generation, House matchups, and Awakening paths create different games each time
+- **Make Choices Matter**: Every Essence spent, every Aspect manifested, every Sanctum claimed should feel meaningful
+- **Create Memorable Moments**: "I can't believe that Pyre/Tempest combo worked!" stories
+
+### Core Gameplay Loop
+1. Survey the Veil - what's revealed? What's hidden?
+2. Assess divine balance - which Aspects counter my opponents?
+3. Generate Essence from Sanctums
+4. Decide: Awaken a new Aspect OR Manifest existing powers?
+5. Deploy Aspects strategically using cosmic wheel knowledge
+6. Resolve conflicts - divine forces clash according to eternal law
+7. Consecrate new ground - expand your domain
+8. React to opponent moves - the cosmic wheel turns for everyone
+
+**The game succeeds when players feel they're conducting divine forces, not just moving pieces.**
 
 ## Development Approach
 
