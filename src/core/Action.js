@@ -44,3 +44,71 @@ export class PassAction extends Action {
     // Do nothing - just pass the turn
   }
 }
+
+/**
+ * ManifestAction - Player deploys a divine aspect to a sanctum
+ */
+export class ManifestAction extends Action {
+  constructor(playerId, aspectId, q, r) {
+    super('manifest', playerId);
+    this.aspectId = aspectId;
+    this.q = q;
+    this.r = r;
+    this.priority = 5;
+  }
+
+  validate(gameState) {
+    const player = gameState.players[this.playerId];
+    return player && player.hasAwakenedAspect(this.aspectId) && player.essence >= 1;
+  }
+
+  canExecute(gameState, grid) {
+    const cell = grid.getCell(this.q, this.r);
+    return cell && cell.type === 'land' && cell.isClaimable;
+  }
+
+  execute(gameState, grid) {
+    const cell = grid.getCell(this.q, this.r);
+    const player = gameState.players[this.playerId];
+    
+    // Deduct cost
+    player.essence -= 1;
+    
+    // Manifest
+    cell.unitType = this.aspectId;
+    cell.owner = this.playerId;
+    
+    console.log(`${player.name} manifested aspect ${this.aspectId} at ${this.q},${this.r}`);
+  }
+}
+
+/**
+ * AwakenAction - Player unlocks a new divine aspect
+ */
+export class AwakenAction extends Action {
+  constructor(playerId, aspectId) {
+    super('awaken', playerId);
+    this.aspectId = aspectId;
+    this.priority = 10; // High priority - happens before manifestation
+  }
+
+  validate(gameState) {
+    const player = gameState.players[this.playerId];
+    return player && !player.hasAwakenedAspect(this.aspectId) && player.canAffordAwakening();
+  }
+
+  canExecute(gameState) {
+    const player = gameState.players[this.playerId];
+    return player && !player.hasAwakenedAspect(this.aspectId) && player.essence >= player.getAwakeningCost();
+  }
+
+  execute(gameState) {
+    const player = gameState.players[this.playerId];
+    const cost = player.getAwakeningCost();
+    
+    player.essence -= cost;
+    player.awakenAspect(this.aspectId);
+    
+    console.log(`${player.name} awakened aspect ${this.aspectId}`);
+  }
+}

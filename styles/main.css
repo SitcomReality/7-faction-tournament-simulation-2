@@ -348,6 +348,94 @@ button:active {
   gap: 4px;
 }
 
+/* Aspect Palette Styles */
+.aspect-palette {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+.aspect-grid {
+  display: flex;
+  gap: 6px;
+}
+
+.aspect-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  position: relative;
+}
+
+.aspect-btn.awakened:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.aspect-btn.selected {
+  border-color: #4CAF50;
+  background: rgba(76, 175, 80, 0.1);
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+}
+
+.aspect-btn.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.aspect-symbol {
+  font-size: 20px;
+}
+
+.lock-icon {
+  position: absolute;
+  font-size: 10px;
+  bottom: -2px;
+  right: -2px;
+  background: #222;
+  border-radius: 50%;
+  padding: 2px;
+}
+
+.essence-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.essence-icon { font-size: 14px; }
+.essence-value { font-weight: bold; color: #4CAF50; font-size: 14px; }
+.essence-label { font-size: 8px; text-transform: uppercase; opacity: 0.6; }
+
+.awakening-info {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.affordable { color: #4CAF50; }
+.unaffordable { color: #FF5252; }
+
+.bar-btn.main-action {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: #4CAF50;
+  padding: 0 24px;
+  width: auto;
+  font-weight: bold;
+}
+
 .turn-counter span, .active-player span {
   font-weight: bold;
   color: #4CAF50;

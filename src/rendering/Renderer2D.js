@@ -88,7 +88,9 @@ export class Renderer2D {
         ctx.fill();
         ctx.stroke();
         
-
+        if (cell.unitType !== null) {
+          this.drawUnit(ctx, pos.x, pos.y, cell.unitType);
+        }
       }
     } else if (isSquareGrid) {
       // Render squares
@@ -110,7 +112,9 @@ export class Renderer2D {
         ctx.fillRect(pos.x - halfSize, pos.y - halfSize, pos.size, pos.size);
         ctx.strokeRect(pos.x - halfSize, pos.y - halfSize, pos.size, pos.size);
         
-
+        if (cell.unitType !== null) {
+          this.drawUnit(ctx, pos.x, pos.y, cell.unitType);
+        }
       }
     } else {
       // Render hexagons
@@ -128,7 +132,9 @@ export class Renderer2D {
         const fillColor = gameState.showHexFill === false ? gameState.theme.neutral : color;
         this.hexRenderer.drawFill(ctx, x, y, path, fillColor, gameState.theme.background);
         
-
+        if (cell.unitType !== null) {
+          this.drawUnit(ctx, x, y, cell.unitType);
+        }
       }
     }
 
@@ -149,6 +155,23 @@ export class Renderer2D {
     }
     
     return gameState.theme.neutral;
+  }
+
+  drawUnit(ctx, x, y, aspectId) {
+    const { ASPECTS } = await import('../core/DivineAspect.js');
+    const aspect = ASPECTS[aspectId];
+    if (!aspect) return;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = 'bold 16px Space Mono';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Add a small shadow/glow to make the emoji pop
+    ctx.shadowColor = aspect.color;
+    ctx.shadowBlur = 8;
+    ctx.fillText(aspect.symbol, x, y);
+    ctx.shadowBlur = 0;
   }
 
   // Bridged for main.js

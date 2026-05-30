@@ -68,17 +68,16 @@ export class TurnManager {
       }
     }
 
-    // Sort by priority if needed
+    // Sort by priority (high first)
     allActions.sort((a, b) => (b.action.priority || 0) - (a.action.priority || 0));
 
     // Execute actions
     for (const { playerId, action } of allActions) {
-      if (action.canExecute(gameState, grid)) {
+      if (action.validate(gameState) && action.canExecute(gameState, grid)) {
         action.execute(gameState, grid);
         
         // Track stats
-        if (action.type === 'move') gameState.stats.movesMade++;
-        if (action.type === 'spawn') gameState.stats.unitsDeployed++;
+        if (action.type === 'manifest') gameState.stats.unitsDeployed++;
       }
     }
   }

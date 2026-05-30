@@ -112,10 +112,25 @@ export class InteractionManager {
       this.canvas.height
     );
     
-    const hex = grid.pixelToHex(worldPos.x, worldPos.y, gameState.hexRotation);
-    const cell = grid.getCell(hex.q, hex.r);
+    const coords = grid.pixelToHex(worldPos.x, worldPos.y, gameState.hexRotation);
+    const cell = grid.getCell(coords.q, coords.r);
     
     if (cell) {
+      // If an aspect is selected, queue a manifestation action instead of painting
+      if (gameState.selectedAspect !== null) {
+        const player = gameState.players[gameState.activePlayer];
+        const { ManifestAction } = await import('../core/Action.js');
+        const action = new ManifestAction(player.id, gameState.selectedAspect, coords.q, coords.r);
+        
+        if (gameEngine.queueAction(player.id, action)) {
+          console.log(`Queued manifestation of aspect ${gameState.selectedAspect} at ${coords.q},${coords.r}`);
+          document.dispatchEvent(new CustomEvent('actionQueued'));
+          gameState.selectedAspect = null; // Deselect after queuing
+        }
+        return;
+      }
+
+      // Normal paint mode
       if (gameState.paintMode === 'land') {
         cell.type = 'land';
         cell.isClaimable = true;

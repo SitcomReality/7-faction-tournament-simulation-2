@@ -24,6 +24,7 @@ export class GameState {
 
     // Paint tool state
     this.paintMode = 'land';
+    this.selectedAspect = null;
 
     // Visual settings
     this.currentTheme = 'default';

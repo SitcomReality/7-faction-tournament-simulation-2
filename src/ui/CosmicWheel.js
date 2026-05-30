@@ -1,15 +1,16 @@
 /**
- * RelationshipGraph - Interactive visualization of faction relationships
+ * CosmicWheel - Interactive visualization of the immutable Divine Aspects relationships
  */
-export class RelationshipGraph {
-  constructor(container, gameState, tournamentGraph) {
+import { ASPECTS, aspectDominates } from '../core/DivineAspect.js';
+
+export class CosmicWheel {
+  constructor(container, gameState) {
     this.container = container;
     this.gameState = gameState;
-    this.tournamentGraph = tournamentGraph;
     
     this.canvas = null;
     this.ctx = null;
-    this.size = 260; // Slightly smaller to fit UI panel padding
+    this.size = 260;
     this.centerX = this.size / 2;
     this.centerY = this.size / 2;
     this.radius = 85;
@@ -25,11 +26,11 @@ export class RelationshipGraph {
   createUI() {
     this.container.innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 12px;">
-        <canvas id="relationship-canvas" width="${this.size}" height="${this.size}" 
+        <canvas id="cosmic-wheel-canvas" width="${this.size}" height="${this.size}" 
                 style="border-radius: 8px; background: rgba(0,0,0,0.3); cursor: default; touch-action: none;"></canvas>
         
         <div style="font-size: 10px; opacity: 0.6; text-align: center;">
-          The Cosmic Wheel (Immutable)
+          The Cosmic Wheel (Immutable Divine Law)
         </div>
 
         <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 8px 0;">
@@ -40,29 +41,23 @@ export class RelationshipGraph {
             <option value="cyberpunk" ${this.gameState.currentTheme === 'cyberpunk' ? 'selected' : ''}>Cyberpunk</option>
             <option value="pastel" ${this.gameState.currentTheme === 'pastel' ? 'selected' : ''}>Pastel</option>
           </select>
-          <button id="shuffle-colors-btn" title="Shuffle Colors">🎲</button>
         </div>
       </div>
     `;
     
-    this.canvas = this.container.querySelector('#relationship-canvas');
+    this.canvas = this.container.querySelector('#cosmic-wheel-canvas');
     this.ctx = this.canvas.getContext('2d');
   }
 
   setupEventListeners() {
     this.canvas.addEventListener('mousemove', (e) => {
-      this.hoveredNode = this.getNodeAt(e.offsetX, e.offsetY);
+      const rect = this.canvas.getBoundingClientRect();
+      this.hoveredNode = this.getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
       this.render();
     });
     
     this.canvas.addEventListener('mouseleave', () => {
       this.hoveredNode = null;
-      this.render();
-    });
-
-    const shuffleBtn = this.container.querySelector('#shuffle-colors-btn');
-    shuffleBtn.addEventListener('click', () => {
-      this.gameState.shuffleFactionColors();
       this.render();
     });
     
@@ -71,6 +66,8 @@ export class RelationshipGraph {
       this.gameState.setTheme(e.target.value);
       this.render();
     });
+
+    document.addEventListener('themeChanged', () => this.render());
   }
 
   getNodeAt(x, y) {
@@ -96,6 +93,7 @@ export class RelationshipGraph {
   }
 
   render() {
+    if (!this.ctx) return;
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.size, this.size);
     
@@ -103,9 +101,10 @@ export class RelationshipGraph {
     const highlightedEdges = [];
     const normalEdges = [];
 
+    // Draw all dominion edges
     for (let i = 0; i < 7; i++) {
       for (let j = 0; j < 7; j++) {
-        if (i !== j && this.tournamentGraph.beats(i, j)) {
+        if (i !== j && aspectDominates(i, j)) {
           if (activeNode !== null && (i === activeNode || j === activeNode)) {
             highlightedEdges.push([i, j]);
           } else {
@@ -128,20 +127,23 @@ export class RelationshipGraph {
   }
 
   drawNode(index) {
+    const aspect = ASPECTS[index];
     const pos = this.getNodePosition(index);
-    const color = this.gameState.theme.factions[index];
+    const color = aspect.color;
     const ctx = this.ctx;
     
     const isHovered = this.hoveredNode === index;
+    const isAwakened = this.gameState.players[this.gameState.activePlayer]?.hasAwakenedAspect(index);
     
     if (isHovered) {
       ctx.shadowColor = color;
       ctx.shadowBlur = 15;
     }
     
-    ctx.fillStyle = color;
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.lineWidth = 2;
+    ctx.fillStyle = isAwakened ? color : 'rgba(40, 40, 60, 0.8)';
+    ctx.strokeStyle = isAwakened ? 'white' : 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = isAwakened ? 2 : 1;
+    
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, this.nodeRadius, 0, Math.PI * 2);
     ctx.fill();
@@ -149,11 +151,17 @@ export class RelationshipGraph {
     
     ctx.shadowBlur = 0;
     
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 14px Space Mono';
+    ctx.fillStyle = isAwakened ? '#000' : 'rgba(255, 255, 255, 0.4)';
+    ctx.font = 'bold 16px Space Mono';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(index.toString(), pos.x, pos.y);
+    ctx.fillText(aspect.symbol, pos.x, pos.y);
+
+    if (isHovered) {
+        ctx.fillStyle = 'white';
+        ctx.font = '10px Space Mono';
+        ctx.fillText(aspect.name, pos.x, pos.y + this.nodeRadius + 12);
+    }
   }
 
   drawEdge(from, to) {
@@ -171,8 +179,8 @@ export class RelationshipGraph {
     const ctx = this.ctx;
     
     const activeNode = this.hoveredNode;
-    let edgeColor = 'rgba(255, 255, 255, 0.2)';
-    let arrowColor = 'rgba(255, 255, 255, 0.4)';
+    let edgeColor = 'rgba(255, 255, 255, 0.15)';
+    let arrowColor = 'rgba(255, 255, 255, 0.3)';
     let lineWidth = 1;
 
     if (activeNode !== null) {

@@ -3,7 +3,8 @@
  */
 import { GenerationSettings } from './GenerationSettings.js';
 import { VisualSettings } from './VisualSettings.js';
-import { RelationshipGraph } from './RelationshipGraph.js';
+import { CosmicWheel } from './CosmicWheel.js';
+import { AspectPalette } from './AspectPalette.js';
 
 export class HUD {
   constructor(container, gameState, grid, gameEngine, worldGenerator, renderer, unitRelationships) {
@@ -17,7 +18,8 @@ export class HUD {
     
     this.visualSettings = null;
     this.generationSettings = null;
-    this.relationshipGraph = null;
+    this.cosmicWheel = null;
+    this.aspectPalette = null;
     this.isVisible = true;
   }
 
@@ -25,10 +27,15 @@ export class HUD {
     this.createLayout();
     this.attachEvents();
 
-    this.relationshipGraph = new RelationshipGraph(
-      document.getElementById('relationship-graph-container'),
+    this.cosmicWheel = new CosmicWheel(
+      document.getElementById('cosmic-wheel-container'),
+      this.gameState
+    );
+
+    this.aspectPalette = new AspectPalette(
+      document.getElementById('aspect-palette-container'),
       this.gameState,
-      this.unitRelationships
+      this.gameEngine
     );
 
     this.visualSettings = new VisualSettings(
@@ -64,11 +71,11 @@ export class HUD {
         </div>
       </div>
 
-      <!-- Left Panel: Relationship Graph -->
+      <!-- Left Panel: Cosmic Wheel -->
       <div id="graph-window" class="hud-window left">
-        <div class="hud-header">Unit Relationships</div>
+        <div class="hud-header">Cosmic Wheel</div>
         <div class="hud-panels-container">
-          <div id="relationship-graph-container"></div>
+          <div id="cosmic-wheel-container"></div>
         </div>
       </div>
 
@@ -86,15 +93,20 @@ export class HUD {
 
       <!-- Bottom Bar: Controls -->
       <div id="bottom-bar">
-        <button id="toggle-graph-btn" class="bar-btn">🔀</button>
+        <button id="toggle-graph-btn" class="bar-btn" title="Toggle Cosmic Wheel">🔀</button>
+        
+        <div id="aspect-palette-container"></div>
+
         <div class="turn-info">
           <span class="turn-counter">Turn <span id="turn-number">1</span></span>
           <span class="turn-phase" id="turn-phase">Planning</span>
           <span class="active-player">Player <span id="active-player-number">1</span></span>
         </div>
-        <button id="end-turn-btn" class="bar-btn" style="background: rgba(76, 175, 80, 0.2); border-color: #4CAF50;">End Turn</button>
-        <button id="regen-btn" class="bar-btn">🔄</button>
-        <button id="toggle-settings-btn" class="bar-btn">⚙️</button>
+        
+        <button id="end-turn-btn" class="bar-btn main-action">End Turn</button>
+        
+        <button id="regen-btn" class="bar-btn" title="Regenerate">🔄</button>
+        <button id="toggle-settings-btn" class="bar-btn" title="Settings">⚙️</button>
       </div>
     `;
   }
