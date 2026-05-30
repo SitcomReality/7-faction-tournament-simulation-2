@@ -330,6 +330,36 @@ button:active {
   z-index: 50;
 }
 
+.turn-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  font-size: 12px;
+  font-family: 'Space Mono', monospace;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  height: 40px;
+}
+
+.turn-counter, .turn-phase, .active-player {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.turn-counter span, .active-player span {
+  font-weight: bold;
+  color: #4CAF50;
+}
+
+.turn-phase {
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+
 .bar-btn {
   width: 48px;
   height: 48px;
@@ -425,6 +455,16 @@ button:active {
 
   #bottom-bar {
     padding: 8px;
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 56px;
+  }
+
+  .turn-info {
+    order: -1;
+    width: 100%;
+    margin-bottom: 8px;
+    justify-content: center;
   }
 
   .bar-btn {

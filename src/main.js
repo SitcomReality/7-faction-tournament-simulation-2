@@ -10,6 +10,7 @@ import { TriangularGrid } from './grid/TriangularGrid.js';
 import { SquareGrid } from './grid/SquareGrid.js';
 import { Renderer2D } from './rendering/Renderer2D.js';
 import { GameEngine } from './core/GameEngine.js';
+import { Player } from './core/Player.js';
 import { WorldGenerator } from './grid/WorldGenerator.js';
 import { HUD } from './ui/HUD.js';
 

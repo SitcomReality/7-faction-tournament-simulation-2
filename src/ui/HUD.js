@@ -87,6 +87,12 @@ export class HUD {
       <!-- Bottom Bar: Controls -->
       <div id="bottom-bar">
         <button id="toggle-graph-btn" class="bar-btn">🔀</button>
+        <div class="turn-info">
+          <span class="turn-counter">Turn <span id="turn-number">1</span></span>
+          <span class="turn-phase" id="turn-phase">Planning</span>
+          <span class="active-player">Player <span id="active-player-number">1</span></span>
+        </div>
+        <button id="end-turn-btn" class="bar-btn" style="background: rgba(76, 175, 80, 0.2); border-color: #4CAF50;">End Turn</button>
         <button id="regen-btn" class="bar-btn">🔄</button>
         <button id="toggle-settings-btn" class="bar-btn">⚙️</button>
       </div>
@@ -138,6 +144,19 @@ export class HUD {
       this.generationSettings.regenerateWorld();
     });
 
+    // Turn controls
+    const endTurnBtn = document.getElementById('end-turn-btn');
+    endTurnBtn.addEventListener('click', () => {
+      if (this.gameEngine.endTurn(this.gameState, this.grid)) {
+        this.updateTurnDisplay();
+      }
+    });
+
+    // Listen for turn updates
+    document.addEventListener('turnAdvanced', () => {
+      this.updateTurnDisplay();
+    });
+
     // Listen for paint mode changes
     document.addEventListener('paintModeChanged', () => {
       const buttons = document.querySelectorAll('.paint-option');
@@ -149,5 +168,18 @@ export class HUD {
 
   update() {
     // Update HUD elements if needed
+  }
+
+  updateTurnDisplay() {
+    const turnNumber = document.getElementById('turn-number');
+    const turnPhase = document.getElementById('turn-phase');
+    const activePlayerNumber = document.getElementById('active-player-number');
+    
+    if (turnNumber) turnNumber.textContent = this.gameState.currentTurn;
+    if (turnPhase) turnPhase.textContent = this.gameState.turnPhase.charAt(0).toUpperCase() + this.gameState.turnPhase.slice(1);
+    if (activePlayerNumber) {
+      const player = this.gameState.players[this.gameState.activePlayer];
+      activePlayerNumber.textContent = player ? player.name : (this.gameState.activePlayer + 1);
+    }
   }
 }

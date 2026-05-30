@@ -9,7 +9,7 @@ export class GameState {
   }
 
   reset() {
-    // Players (1-7)
+    // Players (1-7) - will be initialized by GameEngine
     this.players = [];
     this.activePlayer = 0;
     this.currentTurn = 1;
