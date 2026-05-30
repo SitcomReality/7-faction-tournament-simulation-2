@@ -49,9 +49,7 @@ export class WorldGenerator {
     grid.currentRadius = radius;
     
     // Geometry creation
-    if (typeof grid.createHeptagonal === 'function') {
-      grid.createHeptagonal(radius);
-    } else if (typeof grid.createHexagonal === 'function') {
+    if (typeof grid.createHexagonal === 'function') {
       grid.createHexagonal(radius);
     } else if (typeof grid.createRectangular === 'function') {
       grid.createRectangular(radius * 2, radius * 2);
@@ -132,67 +130,4 @@ export class WorldGenerator {
     return null;
   }
 
-  seedFactions(grid, gameState, pattern = 'scattered', seedsPerFaction = 1) {
-    const landCells = Array.from(grid.getAllCells()).filter(c => c.type === 'land');
-    if (landCells.length === 0) return;
-
-    const activeFactionList = Array.from(gameState.activeFactions);
-    
-    switch (pattern) {
-      case 'scattered':
-        this.seedScattered(landCells, activeFactionList, seedsPerFaction);
-        break;
-      case 'stripes':
-        this.seedStripes(grid, landCells, activeFactionList);
-        break;
-      case 'checkerboard':
-        this.seedCheckerboard(grid, landCells, activeFactionList);
-        break;
-      case 'random':
-        this.seedRandom(landCells, activeFactionList);
-        break;
-    }
-  }
-
-  seedScattered(landCells, factions, seedsPerFaction) {
-    for (const factionId of factions) {
-      for (let i = 0; i < seedsPerFaction; i++) {
-        if (landCells.length === 0) break;
-        
-        const idx = Math.floor(Math.random() * landCells.length);
-        const cell = landCells[idx];
-        
-        cell.setFaction(factionId);
-        cell.clearAllInfluence();
-        
-        landCells.splice(idx, 1);
-      }
-    }
-  }
-
-  seedStripes(grid, landCells, factions) {
-    for (const cell of landCells) {
-      const pos = this.getCellWorldPos(grid, cell);
-      const stripe = Math.floor((pos.x + 1000) / 40) % factions.length;
-      cell.setFaction(factions[stripe]);
-      cell.clearAllInfluence();
-    }
-  }
-
-  seedCheckerboard(grid, landCells, factions) {
-    for (const cell of landCells) {
-      const pos = this.getCellWorldPos(grid, cell);
-      const checker = (Math.floor(pos.x / 30) + Math.floor(pos.y / 30)) % factions.length;
-      cell.setFaction(factions[checker]);
-      cell.clearAllInfluence();
-    }
-  }
-
-  seedRandom(landCells, factions) {
-    for (const cell of landCells) {
-      const factionId = factions[Math.floor(Math.random() * factions.length)];
-      cell.setFaction(factionId);
-      cell.clearAllInfluence();
-    }
-  }
 }

@@ -15,12 +15,7 @@ export class RelationshipGraph {
     this.radius = 85;
     this.nodeRadius = 22;
     
-    this.dragStart = null;
-    this.dragCurrent = null;
     this.hoveredNode = null;
-    
-    this.history = [];
-    this.maxHistory = 20;
     
     this.createUI();
     this.setupEventListeners();
@@ -31,16 +26,10 @@ export class RelationshipGraph {
     this.container.innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 12px;">
         <canvas id="relationship-canvas" width="${this.size}" height="${this.size}" 
-                style="border-radius: 8px; background: rgba(0,0,0,0.3); cursor: crosshair; touch-action: none;"></canvas>
-        
-        <div style="display: flex; gap: 6px;">
-          <button id="graph-shuffle-btn" style="flex: 1; padding: 8px; font-size: 10px;">🎲 Shuffle</button>
-          <button id="graph-undo-btn" style="flex: 1; padding: 8px; font-size: 10px;">↶ Undo</button>
-          <button id="graph-reset-btn" style="flex: 1; padding: 8px; font-size: 10px;">⟲ Reset</button>
-        </div>
+                style="border-radius: 8px; background: rgba(0,0,0,0.3); cursor: default; touch-action: none;"></canvas>
         
         <div style="font-size: 10px; opacity: 0.6; text-align: center;">
-          Drag from faction to faction to set dominance
+          Unit Relationships (Read-Only)
         </div>
 
         <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 8px 0;">
@@ -61,105 +50,27 @@ export class RelationshipGraph {
   }
 
   setupEventListeners() {
-    // Mouse events
-    this.canvas.addEventListener('mousedown', (e) => this.handleStart(e.offsetX, e.offsetY));
-    this.canvas.addEventListener('mousemove', (e) => this.handleMove(e.offsetX, e.offsetY));
-    this.canvas.addEventListener('mouseup', (e) => this.handleEnd(e.offsetX, e.offsetY));
-    this.canvas.addEventListener('mouseleave', () => this.handleCancel());
-    
-    // Touch events
-    this.canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      const rect = this.canvas.getBoundingClientRect();
-      const touch = e.touches[0];
-      this.handleStart(touch.clientX - rect.left, touch.clientY - rect.top);
+    this.canvas.addEventListener('mousemove', (e) => {
+      this.hoveredNode = this.getNodeAt(e.offsetX, e.offsetY);
+      this.render();
     });
     
-    this.canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      const rect = this.canvas.getBoundingClientRect();
-      const touch = e.touches[0];
-      this.handleMove(touch.clientX - rect.left, touch.clientY - rect.top);
+    this.canvas.addEventListener('mouseleave', () => {
+      this.hoveredNode = null;
+      this.render();
     });
-    
-    this.canvas.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      if (this.dragCurrent) {
-        this.handleEnd(this.dragCurrent.x, this.dragCurrent.y);
-      }
-    });
-    
-    // Buttons
-    this.container.querySelector('#graph-shuffle-btn').addEventListener('click', () => this.shuffle());
-    this.container.querySelector('#graph-undo-btn').addEventListener('click', () => this.undo());
-    this.container.querySelector('#graph-reset-btn').addEventListener('click', () => this.reset());
 
-    // Theme controls
     const shuffleBtn = this.container.querySelector('#shuffle-colors-btn');
     shuffleBtn.addEventListener('click', () => {
       this.gameState.shuffleFactionColors();
+      this.render();
     });
     
     const themeSelect = this.container.querySelector('#theme-select');
     themeSelect.addEventListener('change', (e) => {
       this.gameState.setTheme(e.target.value);
-    });
-  }
-
-  saveHistory() {
-    const state = this.tournamentGraph.dominanceMatrix.map(row => [...row]);
-    this.history.push(state);
-    if (this.history.length > this.maxHistory) {
-      this.history.shift();
-    }
-  }
-
-  handleStart(x, y) {
-    const node = this.getNodeAt(x, y);
-    if (node !== null) {
-      this.dragStart = node;
-      this.dragCurrent = { x, y };
       this.render();
-    }
-  }
-
-  handleMove(x, y) {
-    this.hoveredNode = this.getNodeAt(x, y);
-    
-    if (this.dragStart !== null) {
-      this.dragCurrent = { x, y };
-    }
-    
-    this.render();
-  }
-
-  handleEnd(x, y) {
-    if (this.dragStart !== null) {
-      const endNode = this.getNodeAt(x, y);
-      
-      if (endNode !== null && endNode !== this.dragStart) {
-        this.saveHistory();
-        this.setRelationship(this.dragStart, endNode);
-      }
-    }
-    
-    this.dragStart = null;
-    this.dragCurrent = null;
-    this.render();
-  }
-
-  handleCancel() {
-    this.dragStart = null;
-    this.dragCurrent = null;
-    this.hoveredNode = null;
-    this.render();
-  }
-
-  setRelationship(winner, loser) {
-    // Set winner beats loser
-    this.tournamentGraph.dominanceMatrix[winner][loser] = true;
-    this.tournamentGraph.dominanceMatrix[loser][winner] = false;
-    this.render();
+    });
   }
 
   getNodeAt(x, y) {
@@ -188,14 +99,13 @@ export class RelationshipGraph {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.size, this.size);
     
-    const activeNode = this.dragStart !== null ? this.dragStart : this.hoveredNode;
+    const activeNode = this.hoveredNode;
     const highlightedEdges = [];
     const normalEdges = [];
 
-    // Categorize edges to ensure highlighted ones are drawn on top
     for (let i = 0; i < 7; i++) {
       for (let j = 0; j < 7; j++) {
-        if (i !== j && this.tournamentGraph.dominanceMatrix[i][j]) {
+        if (i !== j && this.tournamentGraph.beats(i, j)) {
           if (activeNode !== null && (i === activeNode || j === activeNode)) {
             highlightedEdges.push([i, j]);
           } else {
@@ -205,7 +115,6 @@ export class RelationshipGraph {
       }
     }
 
-    // Draw edges
     for (const [i, j] of normalEdges) {
       this.drawEdge(i, j);
     }
@@ -213,26 +122,6 @@ export class RelationshipGraph {
       this.drawEdge(i, j);
     }
     
-    // Draw drag line
-    if (this.dragStart !== null && this.dragCurrent) {
-      const startPos = this.getNodePosition(this.dragStart);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
-      ctx.beginPath();
-      ctx.moveTo(startPos.x, startPos.y);
-      ctx.lineTo(this.dragCurrent.x, this.dragCurrent.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      
-      // Draw arrow at cursor if over a node
-      if (this.hoveredNode !== null && this.hoveredNode !== this.dragStart) {
-        const endPos = this.getNodePosition(this.hoveredNode);
-        this.drawArrowHead(this.dragCurrent.x, this.dragCurrent.y, endPos.x, endPos.y, 'rgba(76, 175, 80, 0.8)');
-      }
-    }
-    
-    // Draw nodes
     for (let i = 0; i < 7; i++) {
       this.drawNode(i);
     }
@@ -244,18 +133,15 @@ export class RelationshipGraph {
     const ctx = this.ctx;
     
     const isHovered = this.hoveredNode === index;
-    const isDragStart = this.dragStart === index;
     
-    // Glow
-    if (isHovered || isDragStart) {
+    if (isHovered) {
       ctx.shadowColor = color;
       ctx.shadowBlur = 15;
     }
     
-    // Circle
     ctx.fillStyle = color;
-    ctx.strokeStyle = isDragStart ? '#fff' : 'rgba(0, 0, 0, 0.5)';
-    ctx.lineWidth = isDragStart ? 3 : 2;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, this.nodeRadius, 0, Math.PI * 2);
     ctx.fill();
@@ -263,7 +149,6 @@ export class RelationshipGraph {
     
     ctx.shadowBlur = 0;
     
-    // Label
     ctx.fillStyle = '#000';
     ctx.font = 'bold 14px Space Mono';
     ctx.textAlign = 'center';
@@ -275,7 +160,6 @@ export class RelationshipGraph {
     const fromPos = this.getNodePosition(from);
     const toPos = this.getNodePosition(to);
     
-    // Calculate shortened line (stop at node edge)
     const dx = toPos.x - fromPos.x;
     const dy = toPos.y - fromPos.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -286,20 +170,17 @@ export class RelationshipGraph {
     
     const ctx = this.ctx;
     
-    // Determine highlighting based on interaction
-    const activeNode = this.dragStart !== null ? this.dragStart : this.hoveredNode;
+    const activeNode = this.hoveredNode;
     let edgeColor = 'rgba(255, 255, 255, 0.2)';
     let arrowColor = 'rgba(255, 255, 255, 0.4)';
     let lineWidth = 1;
 
     if (activeNode !== null) {
       if (from === activeNode) {
-        // Active node wins -> Positive (Green)
         edgeColor = '#4CAF50';
         arrowColor = '#4CAF50';
         lineWidth = 2;
       } else if (to === activeNode) {
-        // Active node loses -> Negative (Red)
         edgeColor = '#FF5252';
         arrowColor = '#FF5252';
         lineWidth = 2;
@@ -313,7 +194,6 @@ export class RelationshipGraph {
     ctx.lineTo(endX, endY);
     ctx.stroke();
     
-    // Arrow head pointing at loser
     this.drawArrowHead(fromPos.x, fromPos.y, endX, endY, arrowColor);
   }
 
@@ -335,39 +215,5 @@ export class RelationshipGraph {
     );
     ctx.closePath();
     ctx.fill();
-  }
-
-  shuffle() {
-    this.saveHistory();
-    
-    // Create random tournament graph
-    const matrix = Array(7).fill(null).map(() => Array(7).fill(false));
-    
-    for (let i = 0; i < 7; i++) {
-      for (let j = i + 1; j < 7; j++) {
-        if (Math.random() < 0.5) {
-          matrix[i][j] = true;
-        } else {
-          matrix[j][i] = true;
-        }
-      }
-    }
-    
-    this.tournamentGraph.dominanceMatrix = matrix;
-    this.render();
-  }
-
-  undo() {
-    if (this.history.length > 0) {
-      const prevState = this.history.pop();
-      this.tournamentGraph.dominanceMatrix = prevState;
-      this.render();
-    }
-  }
-
-  reset() {
-    this.saveHistory();
-    this.tournamentGraph.dominanceMatrix = this.tournamentGraph.createDefaultGraph();
-    this.render();
   }
 }

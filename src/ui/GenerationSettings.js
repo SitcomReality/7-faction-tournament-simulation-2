@@ -1,10 +1,10 @@
 export class GenerationSettings {
-  constructor(container, gameState, grid, worldGenerator, simulationEngine) {
+  constructor(container, gameState, grid, worldGenerator, gameEngine) {
     this.container = container;
     this.gameState = gameState;
     this.grid = grid;
     this.worldGenerator = worldGenerator;
-    this.simulationEngine = simulationEngine;
+    this.gameEngine = gameEngine;
     this.initialGridType = this.detectGridType();
     
     this.createUI();
@@ -13,7 +13,6 @@ export class GenerationSettings {
   detectGridType() {
     if (this.grid.constructor.name.includes('Triangular')) return 'triangular';
     if (this.grid.constructor.name.includes('Square')) return 'square';
-    if (this.grid.constructor.name.includes('Heptagonal')) return 'voronoi';
     return 'hexagonal';
   }
 
@@ -29,7 +28,6 @@ export class GenerationSettings {
           <option value="triangular" ${this.gameState.gridType === 'triangular' ? 'selected' : ''}>Triangular</option>
           <option value="square" ${this.gameState.gridType === 'square' ? 'selected' : ''}>Square</option>
           <option value="hexagonal" ${this.gameState.gridType === 'hexagonal' ? 'selected' : ''}>Hexagonal</option>
-          <option value="voronoi" ${this.gameState.gridType === 'voronoi' ? 'selected' : ''}>Voronoi</option>
         </select>
       </div>
 
@@ -65,28 +63,9 @@ export class GenerationSettings {
         </div>
         <input type="range" id="map-size-slider" min="10" max="60" step="1" value="${this.gameState.mapSize}">
       </div>
-
-      <div class="setting-row">
-        <span>Initial Pattern</span>
-        <select id="pattern-select" style="width: 140px;">
-          <option value="scattered" ${this.gameState.initialPattern === 'scattered' ? 'selected' : ''}>Scattered</option>
-          <option value="stripes" ${this.gameState.initialPattern === 'stripes' ? 'selected' : ''}>Stripes</option>
-          <option value="checkerboard" ${this.gameState.initialPattern === 'checkerboard' ? 'selected' : ''}>Checkerboard</option>
-          <option value="random" ${this.gameState.initialPattern === 'random' ? 'selected' : ''}>Random Fill</option>
-        </select>
-      </div>
-
-      <div class="setting-slider" id="seeds-slider-container" style="${this.gameState.initialPattern === 'scattered' ? '' : 'display: none;'}">
-        <div class="slider-header">
-          <span>Seeds per Faction</span>
-          <span id="seeds-value">${this.gameState.seedsPerFaction}</span>
-        </div>
-        <input type="range" id="seeds-slider" min="1" max="10" step="1" value="${this.gameState.seedsPerFaction}">
-      </div>
       
       <div style="display: flex; gap: 8px; margin-top: 24px;">
-        <button id="pause-btn" style="flex: 1; padding: 12px 8px;">${this.gameState.isPaused ? 'Resume' : 'Pause'}</button>
-        <button id="reset-btn" style="flex: 1; padding: 12px 8px; background: rgba(76, 175, 80, 0.2); border-color: #4CAF50;">Regenerate</button>
+        <button id="reset-btn" style="flex: 1; padding: 12px 8px; background: rgba(76, 175, 80, 0.2); border-color: #4CAF50;">Regenerate Map</button>
       </div>
     `;
     
@@ -126,29 +105,6 @@ export class GenerationSettings {
       this.gameState.mapSize = val;
       mapSizeValue.textContent = val;
       this.gameState.saveGenerationSettings();
-    });
-
-    const patternSelect = document.getElementById('pattern-select');
-    const seedsSliderContainer = document.getElementById('seeds-slider-container');
-    patternSelect.addEventListener('change', (e) => {
-      this.gameState.initialPattern = e.target.value;
-      seedsSliderContainer.style.display = e.target.value === 'scattered' ? '' : 'none';
-      this.gameState.saveGenerationSettings();
-    });
-
-    const seedsSlider = document.getElementById('seeds-slider');
-    const seedsValue = document.getElementById('seeds-value');
-    seedsSlider.addEventListener('input', (e) => {
-      const val = parseInt(e.target.value);
-      this.gameState.seedsPerFaction = val;
-      seedsValue.textContent = val;
-      this.gameState.saveGenerationSettings();
-    });
-
-    const pauseBtn = document.getElementById('pause-btn');
-    pauseBtn.addEventListener('click', () => {
-      this.gameState.togglePause();
-      pauseBtn.textContent = this.gameState.isPaused ? 'Resume' : 'Pause';
     });
 
     const resetBtn = document.getElementById('reset-btn');

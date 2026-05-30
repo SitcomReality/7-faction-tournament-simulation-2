@@ -103,7 +103,7 @@ export class InteractionManager {
     });
   }
 
-  handlePaint(clientX, clientY, grid, gameState, simulationEngine) {
+  handlePaint(clientX, clientY, grid, gameState, gameEngine) {
     const rect = this.canvas.getBoundingClientRect();
     const worldPos = this.camera.screenToWorld(
       clientX - rect.left, 
@@ -112,15 +112,8 @@ export class InteractionManager {
       this.canvas.height
     );
     
-    const isVoronoiGrid = grid.getCellAt !== undefined;
-    let cell;
-    
-    if (isVoronoiGrid) {
-      cell = grid.getCellAt(worldPos.x, worldPos.y);
-    } else {
-      const hex = grid.pixelToHex(worldPos.x, worldPos.y, gameState.hexRotation);
-      cell = grid.getCell(hex.q, hex.r);
-    }
+    const hex = grid.pixelToHex(worldPos.x, worldPos.y, gameState.hexRotation);
+    const cell = grid.getCell(hex.q, hex.r);
     
     if (cell) {
       if (gameState.paintMode === 'land') {
@@ -129,18 +122,7 @@ export class InteractionManager {
       } else if (gameState.paintMode === 'ocean') {
         cell.type = 'ocean';
         cell.isClaimable = false;
-        cell.factionId = null;
-        cell.clearAllInfluence();
-      } else if (gameState.paintMode === 'faction') {
-        const factionId = gameState.selectedPaintFaction;
-        cell.type = 'land';
-        cell.isClaimable = true;
-        cell.setFaction(factionId);
-        cell.clearAllInfluence();
-        
-        if (simulationEngine && simulationEngine.influenceSystem) {
-          simulationEngine.influenceSystem.activeCells.add(cell);
-        }
+        cell.reset();
       }
     }
   }

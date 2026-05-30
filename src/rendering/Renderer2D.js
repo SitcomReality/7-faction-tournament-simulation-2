@@ -1,8 +1,6 @@
 /**
  * Renderer2D - Main rendering coordinator
  */
-import { ParticleSystem } from './ParticleSystem.js';
-import { ConversionAnimation } from './ConversionAnimation.js';
 import { Camera } from './Camera.js';
 import { HexRenderer } from './HexRenderer.js';
 import { InteractionManager } from './InteractionManager.js';
@@ -18,10 +16,6 @@ export class Renderer2D {
     this.camera = new Camera();
     this.hexRenderer = new HexRenderer();
     this.interaction = new InteractionManager(this, this.camera, this.canvas);
-    
-    // Visual effects state
-    this.particleSystem = new ParticleSystem();
-    this.conversionAnimations = [];
 
     this.setupCanvas();
   }
@@ -51,15 +45,7 @@ export class Renderer2D {
     const { ctx, fxCtx, canvas } = this;
     const { width, height } = canvas;
 
-    // 1. Update visual systems
-    this.particleSystem.update(deltaTime);
-    for (let i = this.conversionAnimations.length - 1; i >= 0; i--) {
-      if (!this.conversionAnimations[i].update(deltaTime)) {
-        this.conversionAnimations.splice(i, 1);
-      }
-    }
-
-    // 2. Clear canvases
+    // 1. Clear canvases
     ctx.fillStyle = gameState.theme.background;
     ctx.fillRect(0, 0, width, height);
     fxCtx.clearRect(0, 0, width, height);
@@ -73,57 +59,12 @@ export class Renderer2D {
     
     fxCtx.globalCompositeOperation = 'lighter';
 
-    // 4. Check grid type
-    const isVoronoiGrid = grid.getCellCenter !== undefined;
+    // 3. Check grid type
     const isTriangularGrid = grid.constructor.name.includes('Triangular');
     const isSquareGrid = grid.constructor.name.includes('Square');
     const bounds = this.camera.getBounds(width, height, (grid.hexSize || grid.cellSize) * 2);
 
-    if (isVoronoiGrid) {
-      // Render irregular Voronoi cells
-      for (const cell of grid.getAllCells()) {
-        const center = grid.getCellCenter(cell);
-        
-        if (center.x < bounds.left || center.x > bounds.right || 
-            center.y < bounds.top || center.y > bounds.bottom) {
-          continue;
-        }
-        
-        const color = this.getCellColor(cell, gameState);
-        const fillColor = gameState.showHexFill === false ? gameState.theme.neutral : color;
-        
-        // Draw polygon
-        ctx.fillStyle = fillColor;
-        ctx.strokeStyle = gameState.theme.background;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        for (let i = 0; i < cell.vertices.length; i++) {
-          const v = cell.vertices[i];
-          if (i === 0) ctx.moveTo(v.x, v.y);
-          else ctx.lineTo(v.x, v.y);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        
-        // FX glow
-        if (cell.factionId !== null && gameState.showHexGlow !== false) {
-          fxCtx.shadowColor = color;
-          fxCtx.shadowBlur = 15;
-          fxCtx.strokeStyle = color;
-          fxCtx.lineWidth = 1.5;
-          fxCtx.beginPath();
-          for (let i = 0; i < cell.vertices.length; i++) {
-            const v = cell.vertices[i];
-            if (i === 0) fxCtx.moveTo(v.x, v.y);
-            else fxCtx.lineTo(v.x, v.y);
-          }
-          fxCtx.closePath();
-          fxCtx.stroke();
-          fxCtx.shadowBlur = 0;
-        }
-      }
-    } else if (isTriangularGrid) {
+    if (isTriangularGrid) {
       // Render triangles
       for (const cell of grid.getAllCells()) {
         const pos = grid.hexToPixel(cell.q, cell.r, gameState.hexRotation);
@@ -147,19 +88,7 @@ export class Renderer2D {
         ctx.fill();
         ctx.stroke();
         
-        if (cell.factionId !== null && gameState.showHexGlow !== false) {
-          fxCtx.shadowColor = color;
-          fxCtx.shadowBlur = 10;
-          fxCtx.strokeStyle = color;
-          fxCtx.lineWidth = 1;
-          fxCtx.beginPath();
-          fxCtx.moveTo(pos.vertices[0].x, pos.vertices[0].y);
-          fxCtx.lineTo(pos.vertices[1].x, pos.vertices[1].y);
-          fxCtx.lineTo(pos.vertices[2].x, pos.vertices[2].y);
-          fxCtx.closePath();
-          fxCtx.stroke();
-          fxCtx.shadowBlur = 0;
-        }
+
       }
     } else if (isSquareGrid) {
       // Render squares
@@ -181,14 +110,7 @@ export class Renderer2D {
         ctx.fillRect(pos.x - halfSize, pos.y - halfSize, pos.size, pos.size);
         ctx.strokeRect(pos.x - halfSize, pos.y - halfSize, pos.size, pos.size);
         
-        if (cell.factionId !== null && gameState.showHexGlow !== false) {
-          fxCtx.shadowColor = color;
-          fxCtx.shadowBlur = 12;
-          fxCtx.strokeStyle = color;
-          fxCtx.lineWidth = 1.5;
-          fxCtx.strokeRect(pos.x - halfSize, pos.y - halfSize, pos.size, pos.size);
-          fxCtx.shadowBlur = 0;
-        }
+
       }
     } else {
       // Render hexagons
@@ -206,17 +128,9 @@ export class Renderer2D {
         const fillColor = gameState.showHexFill === false ? gameState.theme.neutral : color;
         this.hexRenderer.drawFill(ctx, x, y, path, fillColor, gameState.theme.background);
         
-        if (cell.factionId !== null && (gameState.showHexGlow !== false)) {
-          this.hexRenderer.drawGlow(fxCtx, x, y, path, color);
-        }
+
       }
     }
-
-    // 5. Draw overlay effects
-    for (const anim of this.conversionAnimations) {
-      anim.render(fxCtx);
-    }
-    this.particleSystem.render(fxCtx, this.camera.x, this.camera.y, this.camera.zoom);
 
     ctx.restore();
     fxCtx.restore();
@@ -225,59 +139,20 @@ export class Renderer2D {
   getCellColor(cell, gameState) {
     if (cell.type === 'ocean') return gameState.theme.ocean;
     
-    let baseColor = cell.factionId !== null 
-      ? gameState.theme.factions[cell.factionId] 
-      : gameState.theme.neutral;
-    
-    if (gameState.blendInfluenceColors) {
-      const strongest = cell.getStrongestInfluence();
-      if (strongest && strongest.faction !== cell.factionId) {
-        const competitorColor = gameState.theme.factions[strongest.faction];
-        const blend = Math.min(strongest.amount / gameState.conversionThreshold, 0.4);
-        return this.hexRenderer.interpolateColor(baseColor, competitorColor, blend);
-      }
+    // In phase 1, we just return neutral or owner color (if we had players setup).
+    // For now, if there's an owner, we'd use their color, but we'll map unitType to theme colors just to see something temporarily
+    if (cell.unitType !== null) {
+        return gameState.theme.factions[cell.unitType] || gameState.theme.neutral;
+    }
+    if (cell.owner !== null) {
+        return gameState.theme.factions[cell.owner] || gameState.theme.neutral;
     }
     
-    return baseColor;
-  }
-
-  addConversionAnimation(cell, grid, fromColor, toColor, gameState) {
-    if (gameState && gameState.showConversionStar === false) return;
-
-    const isVoronoiGrid = grid.getCellCenter !== undefined;
-    const isTriangularGrid = grid.constructor.name.includes('Triangular');
-    const isSquareGrid = grid.constructor.name.includes('Square');
-    let x, y, size;
-    
-    if (isVoronoiGrid) {
-      const center = grid.getCellCenter(cell);
-      x = center.x;
-      y = center.y;
-      size = grid.cellSize;
-    } else if (isTriangularGrid) {
-      const pos = grid.hexToPixel(cell.q, cell.r, gameState.hexRotation);
-      x = (pos.vertices[0].x + pos.vertices[1].x + pos.vertices[2].x) / 3;
-      y = (pos.vertices[0].y + pos.vertices[1].y + pos.vertices[2].y) / 3;
-      size = grid.hexSize * 0.6;
-    } else if (isSquareGrid) {
-      const pos = grid.hexToPixel(cell.q, cell.r);
-      x = pos.x;
-      y = pos.y;
-      size = pos.size * 0.7;
-    } else {
-      const pos = grid.hexToPixel(cell.q, cell.r, gameState.hexRotation);
-      x = pos.x;
-      y = pos.y;
-      size = grid.hexSize;
-    }
-    
-    this.conversionAnimations.push(
-      new ConversionAnimation(cell, x, y, size, fromColor, toColor)
-    );
+    return gameState.theme.neutral;
   }
 
   // Bridged for main.js
-  handlePaint(clientX, clientY, grid, gameState, simulationEngine) {
-    this.interaction.handlePaint(clientX, clientY, grid, gameState, simulationEngine);
+  handlePaint(clientX, clientY, grid, gameState, gameEngine) {
+    this.interaction.handlePaint(clientX, clientY, grid, gameState, gameEngine);
   }
 }
