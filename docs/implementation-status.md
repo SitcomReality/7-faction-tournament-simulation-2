@@ -1,8 +1,8 @@
 # Implementation Status & Roadmap
 
-## Current State: Phase 1 Complete ✓
+## Current State: Core Loop & Divine Aspects Playable ✓
 
-The Supernal Interregnum is in early development. Here's what's been accomplished and what's next.
+The Supernal Interregnum now has a fast, tactile core loop: you can Awaken Aspects, Manifest them onto a generated map, and watch the cosmic wheel resolve clashes in real time.
 
 ---
 
@@ -13,193 +13,184 @@ The Supernal Interregnum is in early development. Here's what's been accomplishe
 ✅ Removed simulation systems (InfluenceSystem, ParticleSystem, ConversionAnimation)  
 ✅ Removed Voronoi/Heptagonal grid support  
 ✅ Cleaned up SimulationEngine → GameEngine  
-✅ Simplified GameState (removed simulation parameters)  
-✅ Updated Cell class (removed influence, added owner/unitType properties)  
+✅ Simplified GameState (removed old simulation parameters)  
+✅ Updated Cell class (removed influence, added owner/unitType/visibility properties)  
 ✅ Updated grid systems (Triangle, Square, Hex all functional)  
 ✅ Removed obsolete UI (old simulation controls)  
 ✅ Restructured TournamentGraph → UnitRelationships (read-only)  
-✅ Updated RelationshipGraph UI (non-interactive, locked relationships)  
+✅ Replaced old RelationshipGraph with CosmicWheel visualization  
 
-**Ready for Phase 2**
-
----
-
-## Phase 2: Sacred Turns System ✓ COMPLETE
-
-**Status: Core turn loop and infrastructure finalized**
-
-✅ TurnManager.js handles Planning, Resolution, and Cleanup  
-✅ Action queue and simultaneous resolution logic implemented  
-✅ HUD integrates turn counters and phase indicators  
-✅ Player system supports multi-claimant tracking  
-✅ Basic Action base class and PassAction defined  
+**Result:** A lean, modular architecture where `SystemOrchestrator` wires together explicit systems (world, rendering, HUD, engine, audio) and `main.js`/`App.js` are pure entrypoints.
 
 ---
 
-## Phase 3: Divine Aspects System 🔄 IN PROGRESS
+## Phase 2: Sacred Turns System ✓ COMPLETE (SIMPLIFIED)
 
-**Status: Data structures and cosmic wheel logic implemented**
+**Status: Turn loop and action execution implemented with an immediacy-first design.**
 
-✅ DivineAspect.js defines the 7 primal forces  
-✅ UnitRelationships.js (Cosmic Wheel) handles immutable 2-paradoxical dominion  
-✅ Player state tracks Awakened Aspects and Essence reserves  
-✅ Essence cost scaling logic implemented in Player.js  
+✅ `TurnManager` handles a single intuitive phase (`active`) and rotates the active player  
+✅ `GameEngine.executeAction` validates and executes actions immediately for instant feedback  
+✅ Essence generation per turn is implemented in `TurnManager.advanceTurn`  
+✅ HUD integrates turn counter and active player display (`HUD.updateTurnDisplay`)  
+✅ Basic `Action` base class and `PassAction` defined (pass currently implicit via "End Turn")  
 
-⚠️ **Needs Implementation:**
-- [ ] Design sacred geometry SVG paths for each Aspect
-- [ ] Create `ManifestAspect` and `AwakenAspect` Action subclasses
-- [ ] Implement territorial conflict resolution (dominion-based dispersion)
-- [ ] Build AspectPalette UI for selection and awakening rituals
-- [ ] Update RelationshipGraph to use sacred symbols and names
+**Design Note:** We deliberately cut the multi-phase queueing (Planning/Resolution/Cleanup) for now in favor of "tap → action → feedback" to keep the dopamine loop tight and UX friction low; the docs now reflect this simplified, more approachable turn structure.
 
 ---
 
-## Phase 4: Claimant Houses System ⏸️ NOT STARTED
+## Phase 3: Divine Aspects System ✓ PLAYABLE
+
+**Status: Aspects, cosmic wheel, and core rituals are implemented end‑to‑end.**
+
+✅ `DivineAspect.js` defines the 7 primal forces and the Paley/Fano 7‑tournament  
+✅ `aspectDominates` and `UnitRelationships` expose immutable dominion logic  
+✅ `Player` tracks `awakenedAspects` (starting Triad 0,1,2) and Essence reserves with escalating Awakening costs  
+✅ `AwakenAction` and `ManifestAction` are fully implemented and wired into `GameEngine.executeAction`  
+✅ Territorial conflict resolution is in `ManifestAction.execute` (adjacent clashes resolved via the cosmic wheel, ownership updates, events fired)  
+✅ `AspectPalette` UI exists and is hooked up to Awakening and Manifestation selection  
+✅ `CosmicWheel` visualizes all 7 nodes and all 21 directed edges, highlighting wins/losses on hover  
+✅ Audio feedback (`AudioManager`) and particle FX (`Renderer2D.spawnParticles`) reinforce Manifest/Awaken/Clash events  
+
+⚠️ **Remaining / Nice-to-have:**
+- [ ] Replace emoji symbols with final sacred-geometry SVGs and draw them consistently in both grid and CosmicWheel
+- [ ] Add a lightweight tooltip/legend overlay explaining the wheel (especially on mobile)  
+- [ ] Surface Essence income more clearly per turn in the HUD (e.g., "+3 ✨ this turn" micro-feedback)
+
+**Design Note:** The Aspects layer already supports deep strategy; the biggest UX gains now come from explanation and surface polish, not new rules.
+
+---
+
+## Phase 4: Claimant Houses System ⏸️ PARTIALLY EMERGED
+
+**Status: Players exist and own territory, but House identity & UI are minimal.**
+
+✅ `Player` class represents a claimant with id, name, color, AI flag, territories, Essence, and awakened Aspects  
+✅ `GameEngine.createDefaultPlayers` creates two players by default with distinct colors  
+✅ `WorldController.setupWorld` assigns each player a random starting land cell with an initial manifested Aspect  
+✅ Renderer colors owned cells and manifested Aspects using theme faction colors (`Renderer2D.getCellColor`)  
+✅ Basic turn HUD shows active player name and global turn state  
+
+🚧 **To implement / improve:**
+- [ ] Flesh out distinct House lore/names from `lore.md` and apply them as player names/sigils
+- [ ] Separate "House color" from "Aspect color" more clearly in rendering (e.g., borders vs unit glyphs)
+- [ ] Implement more deliberate spawn algorithms (balanced distance, custom presets) instead of pure random land selection
+- [ ] Add a dedicated PlayerInfo / Houses panel showing each claimant's Essence, territories, awakened Aspects, and elimination state
+- [ ] Handoff/hot‑seat UX (basic "Pass device" overlay) once multi-human play is exposed
+
+**Design Note:** You're already halfway to Houses just by how ownership and Essence work; wrapping this in clear identity/UI will make the game vastly more readable.
+
+---
+
+## Phase 5: The Veil of Knowing (Fog of War) ⏸️ NOT STARTED (STRUCTURAL HOOKS READY)
+
+**Status:** No fog logic or rendering yet, but `Cell.visible`/`explored` Sets already exist and can be used.
 
 **What's needed:**
-- [ ] Define 7 Claimant House identities and lore
-- [ ] Create House color palette (distinct from Aspect colors)
-- [ ] Implement territory ownership display
-- [ ] Create spawn point algorithms (balanced, random, fixed)
-- [ ] Grant starting territories to Houses
-- [ ] Build PlayerInfo UI panel
-- [ ] Add House indicators to top bar
-- [ ] Implement hot seat handoff screen
+- [ ] Define vision sources (owned cells vs manifested Aspects vs future "scout" mechanics) and ranges
+- [ ] Implement per-player visibility recalculation on each action/turn
+- [ ] Fog rendering in `Renderer2D` (unexplored → black, explored-not-visible → dimmed, visible → normal)
+- [ ] Adjust unit rendering to hide/ghost enemy Aspects in fog
+- [ ] Optionally add fog toggle in settings (with clear "for learning only" warning)
+- [ ] Optional: minimap stub that reuses fog data
 
-**Dependencies:** Phase 3 (Aspects must exist to grant starting Triad)
+**UX Note:** When you add fog, pair it with subtle reveal animations and a clear "you just discovered X more Sanctums" prompt to keep exploration feeling rewarding rather than confusing.
 
 ---
 
-## Phase 5: The Veil of Knowing ⏸️ NOT STARTED
+## Phase 6: AI Claimants ⏸️ BASIC AI HOOKS PRESENT
+
+**Status:** There is a very simple AI loop already in `GameEngine.update` / `takeAITurn`, but no difficulty tiers.
+
+✅ AI players are flagged via `Player.isAI` and created by default for non‑human players  
+✅ `GameEngine.update` ticks AI every ~1s and calls `takeAITurn`  
+✅ AI will:
+  - Attempt to Awaken a random unowned Aspect when it can afford it
+  - Attempt to Manifest a random awakened Aspect into a valid land cell (adjacent to its territory or any land if it has none)
+  - End turn when no useful actions are found  
+
+🚧 **To expand:**
+- [ ] Extract AI logic into dedicated `AIPlayer` / AI modules rather than keeping it baked into `GameEngine`
+- [ ] Implement basic heuristics (territory value, matchup awareness via `aspectDominates`, "don't suicide into hard counters")
+- [ ] Add difficulty levels that mainly change lookahead depth and risk tolerance
+- [ ] Show a subtle "AI thinking…" indicator when the AI holds the turn a moment for UX clarity
+- [ ] Allow AI/human assignment and difficulty selection in a future Game Setup screen
+
+**Design Note:** Even this simple AI creates a playable solo loop; next steps should focus on *predictable behavior* (so players can learn) before raw strength.
+
+---
+
+## Phase 7: Visual Manifestation & UX Polish ⏸️ EARLY PASS DONE
+
+**Status:** There is already a cohesive dark-void aesthetic with theme switching, aspect glows, particle FX, and responsive HUD panes, but it's still closer to a prototype than a finished "sacred UI".
+
+✅ Color themes in `ColorThemes` and `themeChanged` wiring in `GameState` / `CosmicWheel`  
+✅ `Renderer2D` shows pulsing Aspect glows, manifestation particles, and color-coded territories  
+✅ `HUD` uses glassy panels, bottom-bar controls, and tabbed settings (Map Gen / Visual)  
+✅ Essence and Awakening costs are visible in the AspectPalette, with disabled states for unaffordable Aspects  
+✅ Audio feedback exists for manifesting, awakening, and clashes  
+
+🚧 **High-impact polish tasks:**
+- [ ] Replace emojis with consistent sacred-geometry icons across UI and grid
+- [ ] Add a compact "What beats what?" legend accessible from the bottom bar for first-time players
+- [ ] Improve mobile ergonomics: slightly larger tap targets for palette/aspect buttons and bottom-bar controls
+- [ ] Add micro-feedback for Essence changes (e.g., a brief "+2 ✨" float near the Essence display each turn)
+- [ ] Animate panel show/hide with slightly shorter durations for snappier feel on mobile
+- [ ] Add subtle hover/tap outlines for valid Manifest cells when an Aspect is selected
+
+**UX Note:** The experience is already very "one screen, no scrolling" friendly; the biggest wins are in clarity and teaching, not new widgets.
+
+---
+
+## Phase 8: Ritual Configuration & Multiplayer Scaffolding ⏸️ NOT STARTED
+
+**Status:** None of the configuration/multiplayer scaffolding from the Phase 8 doc is implemented yet; the game boots directly into a default local skirmish.
 
 **What's needed:**
-- [ ] Add visibility properties to Cell (per-player visible/explored Sets)
-- [ ] Define vision rules (range from Sanctums, from Manifestations)
-- [ ] Calculate visible cells each turn
-- [ ] Implement fog rendering (unexplored = dark, explored = grayed)
-- [ ] Hide/show enemy Aspects in fog
-- [ ] Add exploration reveal animations
-- [ ] Create fog of war toggle in settings
-- [ ] Optional: Minimap with fog
+- [ ] Create a `GameSetup` UI shown before the main loop, with options for:
+  - Player count (1–7), human vs AI toggles, and AI difficulty per player
+  - Map size, grid type, map type, and boundary shape (reusing `GenerationSettings` under the hood)
+  - Starting territory / Essence presets and victory conditions
+- [ ] Add hot-seat privacy options and a simple "Pass to Player X" overlay at turn end when multiple humans are present
+- [ ] Implement game state serialization (export/import JSON) and basic save/load from localStorage
+- [ ] Stub online systems (lobby, room codes, reconnection strategy) without committing to a protocol yet  
 
-**Dependencies:** Phase 4 (multi-player must work)
-
----
-
-## Phase 6: AI Claimants ⏸️ NOT STARTED
-
-**What's needed:**
-- [ ] Create AIPlayer.js extending Player
-- [ ] Implement basic heuristics (territory value, threat assessment)
-- [ ] Add difficulty levels (easy/medium/hard)
-- [ ] AI turn processing with "thinking" delay
-- [ ] AI Awakening strategy (which Aspects to unlock when)
-- [ ] AI manifestation logic (optimal placement)
-- [ ] AI indicators in UI
-- [ ] Difficulty selector in game setup
-
-**Dependencies:** Phase 5 (full game rules must exist)
-
----
-
-## Phase 7: Visual Manifestation ⏸️ NOT STARTED
-
-**What's needed:**
-- [ ] Design final Aspect SVG symbols (sacred geometry)
-- [ ] Create House sigil designs
-- [ ] Implement divine light color system
-- [ ] Add Awakening ceremony animations
-- [ ] Add Manifestation spawn effects
-- [ ] Create divine conflict clash animations
-- [ ] Territory capture animations
-- [ ] Polish all button states and transitions
-- [ ] Add tooltips and help text
-- [ ] Optional: Sound effects and music
-
-**Dependencies:** Phase 6 (all systems operational)
-
----
-
-## Phase 8: Ritual Configuration ⏸️ NOT STARTED
-
-**What's needed:**
-- [ ] Create GameSetup.js UI component
-- [ ] Add player count configuration (1-7)
-- [ ] Map size/type/generation presets
-- [ ] Starting position options
-- [ ] Victory condition selection
-- [ ] AI difficulty per player
-- [ ] Game state serialization (save/load)
-- [ ] Hot seat privacy options
-- [ ] Preferences persistence
-- [ ] Online multiplayer scaffolding (future)
-
-**Dependencies:** Phase 7 (full game polish complete)
-
----
-
-## Current Development Focus
-
-**Phase 2 & 3 Complete: The Turn System has been vastly improved!**
-Pivoted from simultaneous queueing to immediate-action turns. Actions provide instant visual/audio feedback (dopamine hit!). Cosmic conflict dynamically resolves when aspects clash.
-
-**Immediate Priority: Polish & Visuals (Phase 7 Elements)**
-The core gameplay loop is incredibly tight now. Next up:
-1. Improve UI panels for player stats
-2. Add more distinct House Sigils / visual indicators
-3. Expand Audio context (ambient drones?)
-
-**Estimated Time to Playable Alpha:**
-- Phase 2 completion: 1-2 sessions
-- Phase 3 (Divine Aspects): 2-3 sessions  
-- Phase 4 (Houses): 1-2 sessions
-- **First playable build: ~5-7 sessions total**
-
-At that point, we'll have:
-- Turn-based gameplay ✓
-- 7 Divine Aspects with cosmic relationships ✓
-- Multiple Houses competing for Sanctums ✓
-- Basic win conditions ✓
-- Hot seat multiplayer ✓
+**Design Note:** You already have a flexible world and state model; the setup screen is mostly about wiring existing knobs into a friendly, low-friction flow.
 
 ---
 
 ## Technical Debt & Known Issues
 
-### Current Issues:
-1. **Color interpolation error** (fixed) - HexRenderer now has defensive color handling
-2. **Grid regeneration** - Works but could be smoother, terrain preservation toggle added
-3. **Paint mode** - Functional but could use better visual feedback
+### Current Issues / Mismatches with Older Docs:
+1. **Turn Phases** – Docs referenced Planning/Resolution/Cleanup queueing, but code now uses a single `active` phase with immediate execution; docs and roadmap updated to match.
+2. **Unit vs Aspect language** – Older "unit/power" terminology has been superseded by Divine Aspects and Manifestations; remaining references should be treated as flavor rather than separate systems.
+3. **Player/Houses** – Code already supports multi-player with basic colors, but the "House" flavor layer and sigils are not yet implemented.
 
 ### Future Considerations:
-- Performance optimization for large maps (100+ cells should render smoothly)
-- Mobile touch controls for Aspect selection
-- Accessibility: colorblind modes, screen reader support
-- State validation and anti-cheat for online multiplayer
-- Replay system to review games
-- Map editor for custom scenarios
+- Performance optimization for very large maps (e.g., culling, batched drawing)
+- Additional mobile affordances (long-press hints, haptics if available)
+- Accessibility: colorblind-friendly themes and higher-contrast mode
+- Replay / export of finished matches for shareable "divine stories"
+- More granular Audio controls (music vs SFX sliders)
 
 ---
 
 ## Success Metrics (from overview.md)
 
-When can we say the game is "done"?
+We can call this version "spiritually complete" when:
 
-- [ ] New players understand cosmic wheel within 2-3 turns
-- [ ] Games feel different each time (varied maps, House matchups)
-- [ ] Every decision feels meaningful
-- [ ] Smooth performance on mobile and desktop
-- [ ] AI provides reasonable challenge
-- [ ] Players create memorable "clutch play" stories
-- [ ] Visual polish makes actions satisfying
-- [ ] Hot seat multiplayer works flawlessly
+- [ ] New players understand the cosmic wheel within 2–3 turns thanks to visual teaching aids
+- [ ] Games feel different each time (varied maps, House personalities, AI behaviors)
+- [ ] Every Essence decision feels meaningful (no obvious "always do X" heuristic)
+- [ ] Performance is smooth on mobile and desktop
+- [ ] AI provides a learnable, gradually increasing challenge
+- [ ] Players create memorable clutch stories ("my Tide surrounded their Pyre just in time...")
+- [ ] Visual/audio polish makes every Manifest/Awaken/Clash satisfying
+- [ ] Hot seat multiplayer works without confusion or spoilers between players
 
 ---
 
 ## Notes
 
-This is a passion project focused on creating a tight, polished turn-based strategy experience. We're working methodically through phases, ensuring each system is solid before moving to the next.
+The current build already delivers a surprisingly tight little divine skirmish; the remaining roadmap focuses on clarity (teaching the wheel), identity (Houses, sigils), and flexibility (setup and multiplayer) rather than adding more raw rules.
 
-**Philosophy:** Better to have 80% of features at 100% quality than 100% of features at 80% quality.
-
-Next session: Focus on completing Phase 2's action system and turn resolution logic.
+**Philosophy:** Keep the core loop simple, legible, and satisfying; reserve complexity for the cosmic relationships and long-term planning, not the UI.
