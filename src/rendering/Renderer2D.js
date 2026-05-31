@@ -222,22 +222,42 @@ export class Renderer2D {
     const activePlayer = gameState.players[gameState.activePlayer];
     if (!activePlayer) return;
     
-    // Clear current visibility
+    const playerId = activePlayer.id;
+    
+    // Clear current visibility only
     for (const cell of grid.getAllCells()) {
-      cell.visible.delete(activePlayer.id);
+      cell.visible.delete(playerId);
     }
     
-    // Grant vision from owned territories
+    // Vision range: 2 hexes/cells
+    const VISION_RANGE = 2;
+    const queue = [];
+    const visited = new Map(); // cell -> distance
+
+    // Initial sources: owned territories
     for (const cell of grid.getAllCells()) {
-      if (cell.owner === activePlayer.id) {
-        cell.visible.add(activePlayer.id);
-        cell.explored.add(activePlayer.id);
-        
-        // Grant vision to neighbors
+      if (cell.owner === playerId) {
+        queue.push({ cell, dist: 0 });
+        visited.set(cell, 0);
+        cell.visible.add(playerId);
+        cell.explored.add(playerId);
+      }
+    }
+
+    // BFS for vision spread
+    let head = 0;
+    while (head < queue.length) {
+      const { cell, dist } = queue[head++];
+      
+      if (dist < VISION_RANGE) {
         const neighbors = grid.getNeighbors(cell.q, cell.r);
-        for (const n of neighbors) {
-          n.visible.add(activePlayer.id);
-          n.explored.add(activePlayer.id);
+        for (const neighbor of neighbors) {
+          if (!visited.has(neighbor)) {
+            visited.set(neighbor, dist + 1);
+            neighbor.visible.add(playerId);
+            neighbor.explored.add(playerId);
+            queue.push({ cell: neighbor, dist: dist + 1 });
+          }
         }
       }
     }

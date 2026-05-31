@@ -81,15 +81,15 @@ export class HexGrid {
    */
   hexToPixel(q, r, rotation = 'pointy') {
     const size = this.hexSize;
-    if (rotation === 'flat') {
-      // Flat-top: rotate 30 degrees
-      const x = size * (Math.sqrt(3) * q + Math.sqrt(3)/2 * r);
-      const y = size * (3/2 * r);
+    if (rotation === 'pointy') {
+      // Pointy-top (default): rows are offset
+      const x = size * (Math.sqrt(3) * q + Math.sqrt(3) / 2 * r);
+      const y = size * (3 / 2 * r);
       return { x, y };
     } else {
-      // Pointy-top (default)
-      const x = size * (3/2 * q);
-      const y = size * (Math.sqrt(3)/2 * q + Math.sqrt(3) * r);
+      // Flat-top: columns are offset
+      const x = size * (3 / 2 * q);
+      const y = size * (Math.sqrt(3) / 2 * q + Math.sqrt(3) * r);
       return { x, y };
     }
   }
@@ -99,13 +99,13 @@ export class HexGrid {
    */
   pixelToHex(x, y, rotation = 'pointy') {
     const size = this.hexSize;
-    if (rotation === 'flat') {
-      const q = (Math.sqrt(3)/3 * x - 1/3 * y) / size;
-      const r = (2/3 * y) / size;
+    if (rotation === 'pointy') {
+      const q = (Math.sqrt(3) / 3 * x - 1 / 3 * y) / size;
+      const r = (2 / 3 * y) / size;
       return this.axialRound(q, r);
     } else {
-      const q = (2/3 * x) / size;
-      const r = (-1/3 * x + Math.sqrt(3)/3 * y) / size;
+      const q = (2 / 3 * x) / size;
+      const r = (-1 / 3 * x + Math.sqrt(3) / 3 * y) / size;
       return this.axialRound(q, r);
     }
   }
