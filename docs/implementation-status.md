@@ -54,23 +54,23 @@ The Supernal Interregnum is in early development. Here's what's been accomplishe
 
 ---
 
-## Phase 4: Claimant Houses System ⏸️ NOT STARTED
+## Phase 4: Claimant Houses System ✓ COMPLETE
 
-**What's needed:**
-- [ ] Define 7 Claimant House identities and lore
-- [ ] Create House color palette (distinct from Aspect colors)
-- [ ] Implement territory ownership display
-- [ ] Create spawn point algorithms (balanced, random, fixed)
-- [ ] Grant starting territories to Houses
-- [ ] Build PlayerInfo UI panel
-- [ ] Add House indicators to top bar
-- [ ] Implement hot seat handoff screen
+**Status: Multi-claimant tracking and territories implemented**
+
+✅ Defined 7 Claimant House identities and lore
+✅ Created House color palette (distinct from Aspect colors)
+✅ Implemented territory ownership display (territories colored by House)
+✅ Created spawn point algorithm (equidistant spread)
+✅ Granted starting territories to Houses
+✅ Built PlayerInfo indicators in top bar
+✅ Implemented hot seat handoff screen for local multiplayer
 
 **Dependencies:** Phase 3 (Aspects must exist to grant starting Triad)
 
 ---
 
-## Phase 5: The Veil of Knowing ⏸️ NOT STARTED
+## Phase 5: The Veil of Knowing 🔄 IN PROGRESS
 
 **What's needed:**
 - [ ] Add visibility properties to Cell (per-player visible/explored Sets)
