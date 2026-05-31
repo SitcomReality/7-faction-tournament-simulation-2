@@ -7,14 +7,16 @@ import { InteractionManager } from './InteractionManager.js';
 import { ASPECTS } from '../core/DivineAspect.js';
 
 export class Renderer2D {
-  constructor(canvas, fxCanvas) {
+  constructor(canvas, fxCanvas, audio) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.fxCanvas = fxCanvas;
     this.fxCtx = fxCanvas.getContext('2d');
     
     // Modular sub-systems
+    this.audio = audio;
     this.camera = new Camera();
+    this.particles = [];
     this.hexRenderer = new HexRenderer();
     this.interaction = new InteractionManager(this, this.camera, this.canvas);
 
@@ -60,6 +62,25 @@ export class Renderer2D {
     
     fxCtx.globalCompositeOperation = 'lighter';
 
+    // Render particles on fxCanvas
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.life -= deltaTime;
+      if (p.life <= 0) {
+        this.particles.splice(i, 1);
+        continue;
+      }
+      
+      p.x += p.vx * deltaTime * 0.05;
+      p.y += p.vy * deltaTime * 0.05;
+      
+      const alpha = p.life / p.maxLife;
+      fxCtx.fillStyle = `rgba(${p.color}, ${alpha})`;
+      fxCtx.beginPath();
+      fxCtx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+      fxCtx.fill();
+    }
+
     // 3. Check grid type
     const isTriangularGrid = grid.constructor.name.includes('Triangular');
     const isSquareGrid = grid.constructor.name.includes('Square');
@@ -92,6 +113,18 @@ export class Renderer2D {
         if (cell.unitType !== null) {
           this.drawUnit(ctx, pos.x, pos.y, cell.unitType);
         }
+        
+        if (this.interaction.hoveredCoords && 
+            cell.q === this.interaction.hoveredCoords.q && 
+            cell.r === this.interaction.hoveredCoords.r) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fill();
+            if (gameState.selectedAspect !== null) {
+                ctx.globalAlpha = 0.5;
+                this.drawUnit(ctx, pos.x, pos.y, gameState.selectedAspect);
+                ctx.globalAlpha = 1.0;
+            }
+        }
       }
     } else if (isSquareGrid) {
       // Render squares
@@ -116,6 +149,18 @@ export class Renderer2D {
         if (cell.unitType !== null) {
           this.drawUnit(ctx, pos.x, pos.y, cell.unitType);
         }
+        
+        if (this.interaction.hoveredCoords && 
+            cell.q === this.interaction.hoveredCoords.q && 
+            cell.r === this.interaction.hoveredCoords.r) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillRect(pos.x - halfSize, pos.y - halfSize, pos.size, pos.size);
+            if (gameState.selectedAspect !== null) {
+                ctx.globalAlpha = 0.5;
+                this.drawUnit(ctx, pos.x, pos.y, gameState.selectedAspect);
+                ctx.globalAlpha = 1.0;
+            }
+        }
       }
     } else {
       // Render hexagons
@@ -135,6 +180,22 @@ export class Renderer2D {
         
         if (cell.unitType !== null) {
           this.drawUnit(ctx, x, y, cell.unitType);
+        }
+        
+        // Draw hover preview
+        if (this.interaction.hoveredCoords && 
+            cell.q === this.interaction.hoveredCoords.q && 
+            cell.r === this.interaction.hoveredCoords.r) {
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            this.hexRenderer.drawFill(ctx, x, y, path, ctx.fillStyle, 'rgba(255,255,255,0.5)');
+            
+            if (gameState.selectedAspect !== null) {
+                // Ghost unit
+                ctx.globalAlpha = 0.5;
+                this.drawUnit(ctx, x, y, gameState.selectedAspect);
+                ctx.globalAlpha = 1.0;
+            }
         }
       }
     }
@@ -156,6 +217,33 @@ export class Renderer2D {
     }
     
     return gameState.theme.neutral;
+  }
+
+  spawnParticles(x, y, colorStr) {
+    // Parse hex to rgb roughly or just use a nice white/gold
+    let rgb = '255, 215, 0'; // default gold
+    if (colorStr.startsWith('#')) {
+      const hex = colorStr.substring(1);
+      const r = parseInt(hex.substring(0,2), 16);
+      const g = parseInt(hex.substring(2,4), 16);
+      const b = parseInt(hex.substring(4,6), 16);
+      rgb = `${r}, ${g}, ${b}`;
+    }
+
+    for (let i = 0; i < 15; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 2 + 1;
+      this.particles.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 500 + Math.random() * 500,
+        maxLife: 1000,
+        size: Math.random() * 4 + 2,
+        color: rgb
+      });
+    }
   }
 
   drawUnit(ctx, x, y, aspectId) {

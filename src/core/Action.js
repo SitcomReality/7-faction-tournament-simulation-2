@@ -1,3 +1,5 @@
+import { aspectDominates } from './DivineAspect.js';
+
 /**
  * Action - Base class for player actions
  */
@@ -64,21 +66,55 @@ export class ManifestAction extends Action {
 
   canExecute(gameState, grid) {
     const cell = grid.getCell(this.q, this.r);
-    return cell && cell.type === 'land' && cell.isClaimable;
+    if (!cell || cell.type !== 'land' || !cell.isClaimable || cell.unitType !== null) {
+      return false;
+    }
+    
+    // Must be adjacent to owned territory, or player has no territories
+    let ownedCount = 0;
+    for (const c of grid.getAllCells()) {
+      if (c.owner === this.playerId) ownedCount++;
+    }
+    
+    if (ownedCount === 0) return true;
+    
+    const neighbors = grid.getNeighbors(this.q, this.r);
+    return neighbors.some(n => n.owner === this.playerId);
   }
 
   execute(gameState, grid) {
     const cell = grid.getCell(this.q, this.r);
     const player = gameState.players[this.playerId];
     
-    // Deduct cost
     player.essence -= 1;
-    
-    // Manifest
     cell.unitType = this.aspectId;
     cell.owner = this.playerId;
     
-    console.log(`${player.name} manifested aspect ${this.aspectId} at ${this.q},${this.r}`);
+    // Cosmic Conflict Resolution!
+    const neighbors = grid.getNeighbors(this.q, this.r);
+    for (const neighbor of neighbors) {
+      if (neighbor.owner !== null && neighbor.owner !== this.playerId && neighbor.unitType !== null) {
+         if (aspectDominates(this.aspectId, neighbor.unitType)) {
+             // We dominate! Destroy enemy.
+             neighbor.unitType = null;
+             neighbor.owner = this.playerId; 
+             document.dispatchEvent(new CustomEvent('divineClash', { detail: { winner: this.playerId, q: neighbor.q, r: neighbor.r } }));
+         } else if (aspectDominates(neighbor.unitType, this.aspectId)) {
+             // They dominate us! Our new manifestation is destroyed!
+             cell.unitType = null;
+             cell.owner = neighbor.owner; // They claim our spot!
+             document.dispatchEvent(new CustomEvent('divineClash', { detail: { winner: neighbor.owner, q: cell.q, r: cell.r } }));
+         }
+      }
+    }
+    
+    // Stats
+    if (gameState.stats) gameState.stats.unitsDeployed = (gameState.stats.unitsDeployed || 0) + 1;
+    
+    // Visual effect
+    document.dispatchEvent(new CustomEvent('aspectManifested', {
+      detail: { q: this.q, r: this.r, aspectId: this.aspectId }
+    }));
   }
 }
 

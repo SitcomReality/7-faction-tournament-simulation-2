@@ -3,96 +3,25 @@
  */
 export class TurnManager {
   constructor() {
-    this.actionQueue = new Map(); // playerId -> Action[]
-    this.currentPhase = 'planning'; // 'planning' | 'resolution' | 'cleanup'
+    this.currentPhase = 'active'; // Just one phase now!
   }
 
   initialize(players) {
-    this.actionQueue.clear();
-    for (const player of players) {
-      this.actionQueue.set(player.id, []);
-    }
-    this.currentPhase = 'planning';
-  }
-
-  queueAction(playerId, action, gameState) {
-    if (this.currentPhase !== 'planning') {
-      console.warn('Cannot queue actions outside planning phase');
-      return false;
-    }
-
-    if (!this.actionQueue.has(playerId)) {
-      console.warn('Invalid player ID');
-      return false;
-    }
-
-    // Validate action (pass gameState so actions that need player/state info can validate)
-    if (!action.validate(gameState)) {
-      console.warn('Action validation failed');
-      return false;
-    }
-
-    this.actionQueue.get(playerId).push(action);
-    return true;
-  }
-
-  clearPlayerActions(playerId) {
-    if (this.actionQueue.has(playerId)) {
-      this.actionQueue.set(playerId, []);
-    }
+    this.currentPhase = 'active';
   }
 
   endTurn(gameState, grid) {
-    // Move through turn phases
-    if (this.currentPhase === 'planning') {
-      this.currentPhase = 'resolution';
-      this.resolveActions(gameState, grid);
-      this.currentPhase = 'cleanup';
-      this.cleanup(gameState);
-      
-      // Advance to next player or next turn
-      this.advanceTurn(gameState);
-      this.currentPhase = 'planning';
-      
-      return true;
-    }
-    return false;
+    this.cleanup(gameState, grid);
+    this.advanceTurn(gameState, grid);
+    return true;
   }
 
-  resolveActions(gameState, grid) {
-    // Process all queued actions
-    const allActions = [];
-    for (const [playerId, actions] of this.actionQueue) {
-      for (const action of actions) {
-        allActions.push({ playerId, action });
-      }
-    }
-
-    // Sort by priority (high first)
-    allActions.sort((a, b) => (b.action.priority || 0) - (a.action.priority || 0));
-
-    // Execute actions
-    for (const { playerId, action } of allActions) {
-      if (action.validate(gameState) && action.canExecute(gameState, grid)) {
-        action.execute(gameState, grid);
-        
-        // Track stats
-        if (action.type === 'manifest') gameState.stats.unitsDeployed++;
-      }
-    }
-  }
-
-  cleanup(gameState) {
-    // Clear action queues
-    for (const playerId of this.actionQueue.keys()) {
-      this.actionQueue.set(playerId, []);
-    }
-
+  cleanup(gameState, grid) {
     // Update turn counter
-    gameState.stats.turnCount++;
+    if (gameState.stats) gameState.stats.turnCount++;
   }
 
-  advanceTurn(gameState) {
+  advanceTurn(gameState, grid) {
     // Move to next player
     gameState.activePlayer = (gameState.activePlayer + 1) % gameState.players.length;
     
@@ -101,6 +30,22 @@ export class TurnManager {
       gameState.currentTurn++;
     }
 
+    // Generate essence for the new active player
+    const activePlayer = gameState.players[gameState.activePlayer];
+    let territoryCount = 0;
+    
+    if (grid) {
+      for (const cell of grid.getAllCells()) {
+        if (cell.owner === activePlayer.id) {
+          territoryCount++;
+        }
+      }
+    }
+    
+    // Base 2 essence + 1 per 3 territories
+    const generated = 2 + Math.floor(territoryCount / 3);
+    activePlayer.essence += generated;
+
     // Dispatch event for UI updates
     document.dispatchEvent(new CustomEvent('turnAdvanced', { 
       detail: { 
@@ -108,9 +53,5 @@ export class TurnManager {
         activePlayer: gameState.activePlayer 
       }
     }));
-  }
-
-  getQueuedActions(playerId) {
-    return this.actionQueue.get(playerId) || [];
   }
 }

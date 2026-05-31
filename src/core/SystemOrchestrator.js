@@ -11,6 +11,7 @@ import { HUD } from '../ui/HUD.js';
 import { GameLoop } from './GameLoop.js';
 import { WorldController } from './WorldController.js';
 import { DebugTools } from '../utils/DebugTools.js';
+import { AudioManager } from '../rendering/AudioManager.js';
 
 export class SystemOrchestrator {
   constructor() {
@@ -30,7 +31,8 @@ export class SystemOrchestrator {
 
     const canvas = document.getElementById('main-canvas');
     const fxCanvas = document.getElementById('fx-canvas');
-    this.renderer = new Renderer2D(canvas, fxCanvas);
+    this.audio = new AudioManager();
+    this.renderer = new Renderer2D(canvas, fxCanvas, this.audio);
     this.renderer.zoom = 0.9;
 
     // Initial world setup
@@ -82,6 +84,30 @@ export class SystemOrchestrator {
     
     document.addEventListener('rotationChanged', () => {
       if (this.renderer.hexRenderer) this.renderer.hexRenderer.lastRotation = null;
+    });
+
+    document.addEventListener('divineClash', (e) => {
+      const { q, r } = e.detail;
+      const pos = this.worldController.grid.hexToPixel(q, r, this.gameState.hexRotation);
+      if (this.renderer) this.renderer.spawnParticles(pos.x || 0, pos.y || 0, '#FFFFFF');
+      if (this.audio) this.audio.playClash();
+    });
+
+    document.addEventListener('aspectManifested', (e) => {
+      const { q, r, aspectId } = e.detail;
+      const pos = this.worldController.grid.hexToPixel(q, r, this.gameState.hexRotation);
+      import('../core/DivineAspect.js').then(({ ASPECTS }) => {
+        const aspect = ASPECTS[aspectId];
+        if (aspect && this.renderer) {
+          this.renderer.spawnParticles(pos.x, pos.y, aspect.color);
+        }
+      });
+    });
+
+    document.addEventListener('actionExecuted', (e) => {
+      if (e.detail && e.detail.type === 'awaken') {
+        if (this.audio) this.audio.playAwaken();
+      }
     });
   }
 }

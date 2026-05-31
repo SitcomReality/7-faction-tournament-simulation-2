@@ -26,6 +26,8 @@ export class InteractionManager {
   }
 
   setupEventListeners() {
+    this.hoveredCoords = null;
+    
     // Desktop Panning/Painting
     this.canvas.addEventListener('mousedown', (e) => {
       if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
@@ -51,6 +53,8 @@ export class InteractionManager {
       } else if (this.isPainting) {
         this.handlePaint(e.clientX, e.clientY);
       }
+      
+      this.updateHover(e.clientX, e.clientY);
     });
 
     window.addEventListener('mouseup', () => {
@@ -117,6 +121,18 @@ export class InteractionManager {
     });
   }
 
+  updateHover(clientX, clientY) {
+    if (!this.grid || !this.gameState) return;
+    const rect = this.canvas.getBoundingClientRect();
+    const worldPos = this.camera.screenToWorld(
+      clientX - rect.left, 
+      clientY - rect.top, 
+      this.canvas.width, 
+      this.canvas.height
+    );
+    this.hoveredCoords = this.grid.pixelToHex(worldPos.x, worldPos.y, this.gameState.hexRotation);
+  }
+
   handlePaint(clientX, clientY) {
     const { grid, gameState, gameEngine } = this;
     if (!grid || !gameState || !gameEngine) return;
@@ -137,22 +153,14 @@ export class InteractionManager {
         const player = gameState.players[gameState.activePlayer];
         const action = new ManifestAction(player.id, gameState.selectedAspect, coords.q, coords.r);
         
-        if (gameEngine.queueAction(player.id, action, gameState)) {
-          console.log(`Queued manifestation of aspect ${gameState.selectedAspect} at ${coords.q},${coords.r}`);
-          document.dispatchEvent(new CustomEvent('actionQueued'));
-          gameState.selectedAspect = null; // Deselect after queuing
+        if (gameEngine.executeAction(player.id, action, gameState, grid)) {
+          if (this.renderer.audio) this.renderer.audio.playManifest();
+          document.dispatchEvent(new CustomEvent('actionExecuted'));
+          gameState.selectedAspect = null; // Deselect after execution
+        } else {
+          // Play a dull thud or error if failed?
         }
         return;
-      }
-
-      // Normal paint mode
-      if (gameState.paintMode === 'land') {
-        cell.type = 'land';
-        cell.isClaimable = true;
-      } else if (gameState.paintMode === 'ocean') {
-        cell.type = 'ocean';
-        cell.isClaimable = false;
-        cell.reset();
       }
     }
   }

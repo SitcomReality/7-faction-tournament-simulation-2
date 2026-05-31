@@ -59,15 +59,14 @@ export class HUD {
 
   createLayout() {
     this.container.innerHTML = `
-      <!-- Top Bar: Map editing for now -->
+      <!-- Top Bar -->
       <div id="top-bar">
-        <div class="paint-options">
-          <button class="paint-option ${this.gameState.paintMode === 'land' ? 'selected' : ''}" data-mode="land">
-            <span class="paint-icon">🏝️</span>
-          </button>
-          <button class="paint-option ${this.gameState.paintMode === 'ocean' ? 'selected' : ''}" data-mode="ocean">
-            <span class="paint-icon">🌊</span>
-          </button>
+        <div style="font-weight: bold; font-size: 16px; letter-spacing: 2px; text-transform: uppercase;">
+          Supernal Interregnum
+        </div>
+        <div style="margin-left: auto; display: flex; gap: 16px; font-size: 12px; color: var(--text-secondary);">
+          <div>Turn: <span id="top-turn" style="color: #fff;">1</span></div>
+          <div>Units: <span id="top-units" style="color: #fff;">0</span></div>
         </div>
       </div>
 
@@ -99,7 +98,7 @@ export class HUD {
 
         <div class="turn-info">
           <span class="turn-counter">Turn <span id="turn-number">1</span></span>
-          <span class="turn-phase" id="turn-phase">Planning</span>
+          <span class="turn-phase" id="turn-phase">Active</span>
           <span class="active-player">Player <span id="active-player-number">1</span></span>
         </div>
         
@@ -124,14 +123,6 @@ export class HUD {
         
         tab.classList.add('active');
         document.getElementById(tab.dataset.target).classList.add('active');
-      });
-    });
-
-    // Paint mode buttons
-    const paintOptions = document.querySelectorAll('.paint-option');
-    paintOptions.forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.gameState.setPaintMode(btn.dataset.mode);
       });
     });
 
@@ -168,14 +159,12 @@ export class HUD {
     document.addEventListener('turnAdvanced', () => {
       this.updateTurnDisplay();
     });
-
-    // Listen for paint mode changes
-    document.addEventListener('paintModeChanged', () => {
-      const buttons = document.querySelectorAll('.paint-option');
-      buttons.forEach(btn => {
-        btn.classList.toggle('selected', btn.dataset.mode === this.gameState.paintMode);
-      });
+    
+    // Listen for actions executed
+    document.addEventListener('actionExecuted', () => {
+      this.updateTurnDisplay(); // To update any player specific visual state if needed
     });
+
   }
 
   update() {
@@ -193,5 +182,11 @@ export class HUD {
       const player = this.gameState.players[this.gameState.activePlayer];
       activePlayerNumber.textContent = player ? player.name : (this.gameState.activePlayer + 1);
     }
+    
+    const topTurn = document.getElementById('top-turn');
+    if (topTurn) topTurn.textContent = this.gameState.currentTurn;
+    
+    const topUnits = document.getElementById('top-units');
+    if (topUnits && this.gameState.stats) topUnits.textContent = this.gameState.stats.unitsDeployed;
   }
 }

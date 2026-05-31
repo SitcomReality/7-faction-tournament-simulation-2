@@ -17,7 +17,7 @@ export class AspectPalette {
   setupEventListeners() {
     document.addEventListener('turnAdvanced', () => this.render());
     document.addEventListener('aspectAwakened', () => this.render());
-    document.addEventListener('actionQueued', () => this.render());
+    document.addEventListener('actionExecuted', () => this.render());
   }
 
   render() {
@@ -94,10 +94,8 @@ export class AspectPalette {
           // Attempt awakening
           if (player.canAffordAwakening()) {
             const action = new AwakenAction(player.id, id);
-            // Pass current gameState so the engine/turn manager can validate immediately
-            if (this.gameEngine.queueAction(player.id, action, this.gameState)) {
-              console.log(`Queued awakening for aspect ${id}`);
-              document.dispatchEvent(new CustomEvent('actionQueued'));
+            if (this.gameEngine.executeAction(player.id, action, this.gameState, null)) {
+              document.dispatchEvent(new CustomEvent('actionExecuted', { detail: { type: 'awaken' } }));
             }
           }
         }

@@ -41,6 +41,20 @@ export class WorldController {
     
     this.gameEngine.reset();
     this.gameEngine.initialize(this.grid, this.gameState);
+
+    // Assign starting capitals
+    if (!this.gameState.keepTerrain) {
+      const landCells = Array.from(this.grid.getAllCells()).filter(c => c.type === 'land');
+      for (const player of this.gameState.players) {
+         if (landCells.length > 0) {
+             const idx = Math.floor(Math.random() * landCells.length);
+             const cell = landCells.splice(idx, 1)[0];
+             cell.owner = player.id;
+             // Give a random initial aspect!
+             cell.unitType = Array.from(player.awakenedAspects)[Math.floor(Math.random() * player.awakenedAspects.size)];
+         }
+      }
+    }
     
     if (hud) hud.updateGrid(this.grid);
     if (renderer) renderer.interaction.updateReferences(this.grid, this.gameState, this.gameEngine);

@@ -140,14 +140,14 @@ The Supernal Interregnum is in early development. Here's what's been accomplishe
 
 ## Current Development Focus
 
-**Immediate Priority: Complete Phase 2**
+**Phase 2 & 3 Complete: The Turn System has been vastly improved!**
+Pivoted from simultaneous queueing to immediate-action turns. Actions provide instant visual/audio feedback (dopamine hit!). Cosmic conflict dynamically resolves when aspects clash.
 
-The turn system is partially implemented but needs:
-1. **Concrete Actions** - Create specific action types beyond PassAction
-2. **Action Validation** - Ensure players can only make legal moves
-3. **Conflict Resolution** - Handle what happens when actions interact
-4. **Win Conditions** - Define and check victory/defeat
-5. **UI Polish** - Better feedback for turn transitions
+**Immediate Priority: Polish & Visuals (Phase 7 Elements)**
+The core gameplay loop is incredibly tight now. Next up:
+1. Improve UI panels for player stats
+2. Add more distinct House Sigils / visual indicators
+3. Expand Audio context (ambient drones?)
 
 **Estimated Time to Playable Alpha:**
 - Phase 2 completion: 1-2 sessions
