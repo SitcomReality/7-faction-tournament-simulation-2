@@ -9,33 +9,44 @@ export class InteractionManager {
     this.camera = camera;
     this.canvas = canvas;
     
+    // References for action execution
+    this.grid = null;
+    this.gameState = null;
+    this.gameEngine = null;
+
     this.isDragging = false;
     this.isPainting = false;
     this.lastX = 0;
     this.lastY = 0;
     this.touchStartDist = 0;
-    this.dragButton = null; // track which button started the drag (null | 0 = left | 1 = middle)
+    this.dragButton = null; 
     
     this.setupEventListeners();
   }
 
+  updateReferences(grid, gameState, gameEngine) {
+    this.grid = grid;
+    this.gameState = gameState;
+    this.gameEngine = gameEngine;
+  }
+
   setupEventListeners() {
-    // Desktop Panning/Painting
+    // Mouse Down
     this.canvas.addEventListener('mousedown', (e) => {
-      // Middle click (button === 1) should always start a pan.
-      // Left click + Shift also starts a pan. Left click alone is for painting.
       if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
         this.isDragging = true;
         this.dragButton = e.button;
         this.lastX = e.clientX;
         this.lastY = e.clientY;
-        // Prevent default middle-click browser behavior (autoscroll)
         if (e.button === 1) e.preventDefault();
+      } else if (e.button === 0) {
+        this.isPainting = true;
+        this.handlePaint(e.clientX, e.clientY, this.grid, this.gameState, this.gameEngine);
       }
     });
 
+    // Mouse Move
     window.addEventListener('mousemove', (e) => {
-      // If a drag was initiated (either middle click or shift+left), pan regardless of current modifier keys.
       if (this.isDragging) {
         const dx = e.clientX - this.lastX;
         const dy = e.clientY - this.lastY;
@@ -43,17 +54,19 @@ export class InteractionManager {
         this.camera.y += dy / this.camera.zoom;
         this.lastX = e.clientX;
         this.lastY = e.clientY;
+      } else if (this.isPainting) {
+        this.handlePaint(e.clientX, e.clientY, this.grid, this.gameState, this.gameEngine);
       }
     });
 
+    // Mouse Up
     window.addEventListener('mouseup', () => {
       this.isDragging = false;
+      this.isPainting = false;
       this.dragButton = null;
     });
 
-    // Prevent context menu on middle-click drag start interfering
     this.canvas.addEventListener('contextmenu', (e) => {
-      // allow normal context menu when not middle-dragging
       if (this.dragButton === 1) e.preventDefault();
     });
 
@@ -64,13 +77,15 @@ export class InteractionManager {
       this.camera.zoom = Math.max(0.05, Math.min(5, this.camera.zoom));
     }, { passive: false });
 
-    // Mobile Panning/Zooming
+    // Touch Support
     this.canvas.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 2) {
+      if (e.touches.length === 1) {
+        this.isPainting = true;
+        this.handlePaint(e.touches[0].clientX, e.touches[0].clientY, this.grid, this.gameState, this.gameEngine);
+      } else if (e.touches.length === 2) {
         this.isDragging = true;
         this.lastX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
         this.lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        
         const dx = e.touches[1].clientX - e.touches[0].clientX;
         const dy = e.touches[1].clientY - e.touches[0].clientY;
         this.touchStartDist = Math.sqrt(dx * dx + dy * dy);
@@ -80,7 +95,6 @@ export class InteractionManager {
     this.canvas.addEventListener('touchmove', (e) => {
       if (this.isDragging && e.touches.length === 2) {
         e.preventDefault();
-        
         const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
         const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
         const dx = centerX - this.lastX;
@@ -97,15 +111,19 @@ export class InteractionManager {
         this.camera.zoom *= zoomFactor;
         this.camera.zoom = Math.max(0.05, Math.min(5, this.camera.zoom));
         this.touchStartDist = dist;
+      } else if (this.isPainting && e.touches.length === 1) {
+        this.handlePaint(e.touches[0].clientX, e.touches[0].clientY, this.grid, this.gameState, this.gameEngine);
       }
     }, { passive: false });
 
     this.canvas.addEventListener('touchend', () => {
       this.isDragging = false;
+      this.isPainting = false;
     });
   }
 
   handlePaint(clientX, clientY, grid, gameState, gameEngine) {
+    if (!grid || !gameState) return;
     const rect = this.canvas.getBoundingClientRect();
     const worldPos = this.camera.screenToWorld(
       clientX - rect.left, 
