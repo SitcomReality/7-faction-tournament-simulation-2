@@ -12,6 +12,7 @@ import { GameLoop } from './GameLoop.js';
 import { WorldController } from './WorldController.js';
 import { DebugTools } from '../utils/DebugTools.js';
 import { AudioManager } from '../rendering/AudioManager.js';
+import { GameSetup } from '../ui/GameSetup.js';
 
 export class SystemOrchestrator {
   constructor() {
@@ -24,16 +25,43 @@ export class SystemOrchestrator {
     this.gameLoop = null;
     this.renderer = null;
     this.hud = null;
+    this.gameSetup = null;
+    this.setupConfig = null;
   }
 
   async init() {
     console.log('Supernal Interregnum: Initiating Sacred Rite...');
+
+    // Show setup screen
+    const setupContainer = document.getElementById('setup-screen');
+    this.gameSetup = new GameSetup(setupContainer);
+    this.gameSetup.show();
+
+    // Wait for setup completion
+    document.addEventListener('gameSetupComplete', (e) => {
+      this.setupConfig = e.detail;
+      this.startGame();
+    });
+  }
+
+  startGame() {
+    console.log('Starting game with config:', this.setupConfig);
+
+    // Apply setup config to game state
+    this.gameState.mapSize = this.setupConfig.mapSize;
+    this.gameState.gridType = this.setupConfig.gridType;
+    this.gameState.mapType = this.setupConfig.mapType;
+    this.gameState.boundaryShape = this.setupConfig.boundaryShape;
 
     const canvas = document.getElementById('main-canvas');
     const fxCanvas = document.getElementById('fx-canvas');
     this.audio = new AudioManager();
     this.renderer = new Renderer2D(canvas, fxCanvas, this.audio);
     this.renderer.zoom = 0.9;
+
+    // Reset game state and create players from config
+    this.gameState.players = [];
+    this.gameEngine.initialize(null, this.gameState, this.setupConfig.players);
 
     // Initial world setup
     this.worldController.setupWorld(null, this.renderer);

@@ -27,7 +27,7 @@ export class WorldController {
   /**
    * Rebuilds the world grid and regenerates terrain
    */
-  setupWorld(hud, renderer) {
+  setupWorld(hud, renderer, playerConfigs = null) {
     const oldGrid = this.grid;
     this.grid = this.createGrid(this.gameState.gridType);
     
@@ -40,7 +40,7 @@ export class WorldController {
     }, oldGrid);
     
     this.gameEngine.reset();
-    this.gameEngine.initialize(this.grid, this.gameState);
+    this.gameEngine.initialize(this.grid, this.gameState, playerConfigs);
 
     // Assign starting capitals
     if (!this.gameState.keepTerrain) {

@@ -2,11 +2,12 @@
  * Player - Represents a player in the game
  */
 export class Player {
-  constructor(id, name, color, isAI = false) {
+  constructor(id, name, color, isAI = false, difficulty = 'medium') {
     this.id = id;
     this.name = name;
     this.color = color;
     this.isAI = isAI;
+    this.difficulty = difficulty; // 'easy', 'medium', 'hard'
     
     // Awakened Divine Aspects (start with Triad of Foundation: 0, 1, 2)
     this.awakenedAspects = new Set([0, 1, 2]);

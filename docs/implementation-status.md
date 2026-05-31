@@ -141,20 +141,28 @@ The Supernal Interregnum now has a fast, tactile core loop: you can Awaken Aspec
 
 ---
 
-## Phase 8: Ritual Configuration & Multiplayer Scaffolding ⏸️ NOT STARTED
+## Phase 8: Ritual Configuration & Multiplayer Scaffolding 🚧 IN PROGRESS
 
-**Status:** None of the configuration/multiplayer scaffolding from the Phase 8 doc is implemented yet; the game boots directly into a default local skirmish.
+**Status:** Basic game setup screen is now implemented! Players can configure their sacred duel before starting.
 
-**What's needed:**
-- [ ] Create a `GameSetup` UI shown before the main loop, with options for:
-  - Player count (1–7), human vs AI toggles, and AI difficulty per player
-  - Map size, grid type, map type, and boundary shape (reusing `GenerationSettings` under the hood)
-  - Starting territory / Essence presets and victory conditions
-- [ ] Add hot-seat privacy options and a simple "Pass to Player X" overlay at turn end when multiple humans are present
-- [ ] Implement game state serialization (export/import JSON) and basic save/load from localStorage
-- [ ] Stub online systems (lobby, room codes, reconnection strategy) without committing to a protocol yet  
+✅ `GameSetup.js` component shows before game starts  
+✅ Configure player count (2–7 Houses)  
+✅ Set House names for each player  
+✅ Toggle Human vs AI and select AI difficulty per player  
+✅ Configure map settings (grid type, map type, boundary shape, size)  
+✅ "Begin Sacred Rite" button starts game with chosen configuration  
+✅ Game engine and world controller accept player configs  
 
-**Design Note:** You already have a flexible world and state model; the setup screen is mostly about wiring existing knobs into a friendly, low-friction flow.
+🚧 **Remaining tasks:**
+- [ ] Add hot-seat privacy options ("Pass to Player X" overlay between turns)
+- [ ] Quick start option to skip setup and jump into default 2-player game
+- [ ] Starting territory / Essence balance presets
+- [ ] Victory condition toggles (Ascension vs Divine Omniscience vs Last House)
+- [ ] Implement game state serialization (export/import JSON)
+- [ ] Basic save/load from localStorage for in-progress games
+- [ ] Stub online systems (lobby, room codes, reconnection strategy)
+
+**Design Note:** The setup flow is clean and straightforward; next priority is hot-seat handoff UX for multi-human games, then save/load for longer sessions.
 
 ---
 

@@ -8,10 +8,10 @@ export class GameEngine {
     this.turnManager = new TurnManager();
   }
 
-  initialize(grid, gameState) {
+  initialize(grid, gameState, playerConfigs = null) {
     // Initialize players if not already created
     if (gameState.players.length === 0) {
-      this.createDefaultPlayers(gameState);
+      this.createPlayers(gameState, playerConfigs);
     }
     
     this.turnManager.initialize(gameState.players);
@@ -19,16 +19,25 @@ export class GameEngine {
     console.log(`✓ Game engine initialized with ${gameState.players.length} players`);
   }
 
-  createDefaultPlayers(gameState) {
-    // Create 2 players by default (can be configured later)
+  createPlayers(gameState, playerConfigs = null) {
     const playerColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE'];
     
-    for (let i = 0; i < 2; i++) {
+    if (!playerConfigs) {
+      // Default: 2 players
+      playerConfigs = [
+        { name: 'House Aurorus', type: 'human', difficulty: null },
+        { name: 'House Nocturn', type: 'ai', difficulty: 'medium' }
+      ];
+    }
+    
+    for (let i = 0; i < playerConfigs.length; i++) {
+      const config = playerConfigs[i];
       const player = new Player(
         i,
-        `Player ${i + 1}`,
+        config.name,
         playerColors[i],
-        i > 0 // Player 0 is human, others are AI for now
+        config.type === 'ai',
+        config.difficulty
       );
       gameState.players.push(player);
     }
@@ -39,7 +48,7 @@ export class GameEngine {
     
     // Give initial essence
     for (const player of gameState.players) {
-        player.essence = 5;
+      player.essence = 5;
     }
   }
 
