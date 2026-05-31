@@ -9,17 +9,12 @@ export class InteractionManager {
     this.camera = camera;
     this.canvas = canvas;
     
-    // References for action execution
-    this.grid = null;
-    this.gameState = null;
-    this.gameEngine = null;
-
     this.isDragging = false;
     this.isPainting = false;
     this.lastX = 0;
     this.lastY = 0;
     this.touchStartDist = 0;
-    this.dragButton = null; 
+    this.dragButton = null; // track which button started the drag (null | 0 = left | 1 = middle)
     
     this.setupEventListeners();
   }
@@ -31,7 +26,7 @@ export class InteractionManager {
   }
 
   setupEventListeners() {
-    // Mouse Down
+    // Desktop Panning/Painting
     this.canvas.addEventListener('mousedown', (e) => {
       if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
         this.isDragging = true;
@@ -41,11 +36,10 @@ export class InteractionManager {
         if (e.button === 1) e.preventDefault();
       } else if (e.button === 0) {
         this.isPainting = true;
-        this.handlePaint(e.clientX, e.clientY, this.grid, this.gameState, this.gameEngine);
+        this.handlePaint(e.clientX, e.clientY);
       }
     });
 
-    // Mouse Move
     window.addEventListener('mousemove', (e) => {
       if (this.isDragging) {
         const dx = e.clientX - this.lastX;
@@ -55,17 +49,17 @@ export class InteractionManager {
         this.lastX = e.clientX;
         this.lastY = e.clientY;
       } else if (this.isPainting) {
-        this.handlePaint(e.clientX, e.clientY, this.grid, this.gameState, this.gameEngine);
+        this.handlePaint(e.clientX, e.clientY);
       }
     });
 
-    // Mouse Up
     window.addEventListener('mouseup', () => {
       this.isDragging = false;
       this.isPainting = false;
       this.dragButton = null;
     });
 
+    // Prevent context menu on middle-click drag start interfering
     this.canvas.addEventListener('contextmenu', (e) => {
       if (this.dragButton === 1) e.preventDefault();
     });
@@ -77,18 +71,19 @@ export class InteractionManager {
       this.camera.zoom = Math.max(0.05, Math.min(5, this.camera.zoom));
     }, { passive: false });
 
-    // Touch Support
+    // Mobile Panning/Zooming/Painting
     this.canvas.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 1) {
-        this.isPainting = true;
-        this.handlePaint(e.touches[0].clientX, e.touches[0].clientY, this.grid, this.gameState, this.gameEngine);
-      } else if (e.touches.length === 2) {
+      if (e.touches.length === 2) {
         this.isDragging = true;
         this.lastX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
         this.lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        
         const dx = e.touches[1].clientX - e.touches[0].clientX;
         const dy = e.touches[1].clientY - e.touches[0].clientY;
         this.touchStartDist = Math.sqrt(dx * dx + dy * dy);
+      } else if (e.touches.length === 1) {
+        this.isPainting = true;
+        this.handlePaint(e.touches[0].clientX, e.touches[0].clientY);
       }
     }, { passive: false });
 
@@ -112,7 +107,7 @@ export class InteractionManager {
         this.camera.zoom = Math.max(0.05, Math.min(5, this.camera.zoom));
         this.touchStartDist = dist;
       } else if (this.isPainting && e.touches.length === 1) {
-        this.handlePaint(e.touches[0].clientX, e.touches[0].clientY, this.grid, this.gameState, this.gameEngine);
+        this.handlePaint(e.touches[0].clientX, e.touches[0].clientY);
       }
     }, { passive: false });
 
@@ -122,8 +117,9 @@ export class InteractionManager {
     });
   }
 
-  handlePaint(clientX, clientY, grid, gameState, gameEngine) {
-    if (!grid || !gameState) return;
+  handlePaint(clientX, clientY) {
+    const { grid, gameState, gameEngine } = this;
+    if (!grid || !gameState || !gameEngine) return;
     const rect = this.canvas.getBoundingClientRect();
     const worldPos = this.camera.screenToWorld(
       clientX - rect.left, 

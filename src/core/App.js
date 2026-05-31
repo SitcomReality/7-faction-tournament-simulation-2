@@ -1,42 +1,42 @@
 import { UnitRelationships } from './UnitRelationships.js';
-import { GameState } from './GameState.js';
-import { WorldGenerator } from '../grid/WorldGenerator.js';
-import { GameEngine } from './GameEngine.js';
-import { Renderer2D } from '../rendering/Renderer2D.js';
-import { GridFactory } from '../grid/GridFactory.js';
-import { HUD } from '../ui/HUD.js';
 import { ASPECTS } from './DivineAspect.js';
+import { GameState } from './GameState.js';
+import { HexGrid } from '../grid/HexGrid.js';
+import { TriangularGrid } from '../grid/TriangularGrid.js';
+import { SquareGrid } from '../grid/SquareGrid.js';
+import { Renderer2D } from '../rendering/Renderer2D.js';
+import { GameEngine } from './GameEngine.js';
+import { WorldGenerator } from '../grid/WorldGenerator.js';
+import { HUD } from '../ui/HUD.js';
 
 /**
- * Application - Main hub orchestrating the game's lifecycle and systems
+ * App - The central orchestrator for the Supernal Interregnum.
+ * Manages the lifecycle of systems and high-level game flow.
  */
-export class Application {
+export class App {
   constructor() {
-    this.gameState = new GameState();
     this.unitRelationships = new UnitRelationships();
+    this.gameState = new GameState();
     this.worldGenerator = new WorldGenerator();
     this.gameEngine = new GameEngine();
     
     this.grid = null;
     this.renderer = null;
     this.hud = null;
-    
-    this.lastTime = performance.now();
+    this.lastTime = 0;
   }
 
-  /**
-   * Main entry point for the application
-   */
-  init() {
-    console.log('Sacred Duel Application initializing...');
-    
+  async init() {
+    console.log('Supernal Interregnum: Initiating Sacred Rite...');
+
     const canvas = document.getElementById('main-canvas');
     const fxCanvas = document.getElementById('fx-canvas');
     this.renderer = new Renderer2D(canvas, fxCanvas);
     this.renderer.zoom = 0.9;
-    
+
+    // Initial world setup
     this.setupWorld();
-    
+
     // Initialize HUD
     const hudContainer = document.getElementById('hud');
     this.hud = new HUD(
@@ -49,18 +49,29 @@ export class Application {
       this.unitRelationships
     );
     this.hud.initialize();
-    
-    this.attachGlobalEvents();
-    this.setupDebugInterface();
-    this.startLoop();
+
+    // Global Events
+    this.attachEvents();
+
+    // Expose for debugging
+    this.exposeDebugGlobals();
+
+    // Start loop
+    this.lastTime = performance.now();
+    requestAnimationFrame((t) => this.renderLoop(t));
   }
 
-  /**
-   * Handles world generation and system re-linking
-   */
+  createGrid(type) {
+    switch (type) {
+      case 'triangular': return new TriangularGrid(16);
+      case 'square': return new SquareGrid(16);
+      default: return new HexGrid(16);
+    }
+  }
+
   setupWorld() {
     const oldGrid = this.grid;
-    this.grid = GridFactory.create(this.gameState.gridType, 16);
+    this.grid = this.createGrid(this.gameState.gridType);
     
     this.worldGenerator.generateWorld(this.grid, {
       type: this.gameState.mapType,
@@ -77,17 +88,31 @@ export class Application {
     if (this.renderer) this.renderer.interaction.updateReferences(this.grid, this.gameState, this.gameEngine);
   }
 
-  attachGlobalEvents() {
+  attachEvents() {
     document.addEventListener('worldRegenRequested', () => this.setupWorld());
-    
     document.addEventListener('rotationChanged', () => {
-      if (this.renderer && this.renderer.hexRenderer) {
-        this.renderer.hexRenderer.lastRotation = null;
-      }
+      if (this.renderer.hexRenderer) this.renderer.hexRenderer.lastRotation = null;
     });
   }
 
-  setupDebugInterface() {
+  renderLoop(currentTime) {
+    let deltaTime = currentTime - this.lastTime;
+    this.lastTime = currentTime;
+    
+    if (deltaTime > 1000) deltaTime = 1000;
+    
+    if (this.gameEngine && this.grid) {
+      this.gameEngine.update(deltaTime, this.grid, this.gameState, this.unitRelationships);
+    }
+    
+    if (this.renderer) {
+      this.renderer.render(this.grid, this.gameState, deltaTime);
+    }
+    
+    requestAnimationFrame((t) => this.renderLoop(t));
+  }
+
+  exposeDebugGlobals() {
     window.game = {
       app: this,
       gameState: this.gameState,
@@ -97,31 +122,10 @@ export class Application {
       aspects: ASPECTS,
       stats: () => {
         console.log('Total cells:', this.grid.cells.size);
-        console.log('Players:', this.gameState.players.length);
         this.gameState.players.forEach(p => {
           console.log(`  ${p.name}: ${p.essence} essence, aspects:`, [...p.awakenedAspects]);
         });
       }
     };
-  }
-
-  startLoop() {
-    const loop = (currentTime) => {
-      let deltaTime = currentTime - this.lastTime;
-      this.lastTime = currentTime;
-      
-      if (deltaTime > 1000) deltaTime = 1000;
-      
-      if (this.gameEngine && this.grid) {
-        this.gameEngine.update(deltaTime, this.grid, this.gameState, this.unitRelationships);
-      }
-      
-      if (this.renderer && this.grid) {
-        this.renderer.render(this.grid, this.gameState, deltaTime);
-      }
-      
-      requestAnimationFrame(loop);
-    };
-    requestAnimationFrame(loop);
   }
 }
