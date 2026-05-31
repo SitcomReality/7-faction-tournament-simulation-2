@@ -222,42 +222,40 @@ export class Renderer2D {
     const activePlayer = gameState.players[gameState.activePlayer];
     if (!activePlayer) return;
     
-    const playerId = activePlayer.id;
-    
-    // Clear current visibility only
+    // Clear current visibility
     for (const cell of grid.getAllCells()) {
-      cell.visible.delete(playerId);
+      cell.visible.delete(activePlayer.id);
     }
     
-    // Vision range: 2 hexes/cells
-    const VISION_RANGE = 2;
-    const queue = [];
-    const visited = new Map(); // cell -> distance
+    let hasOwned = false;
 
-    // Initial sources: owned territories
+    // Grant vision from owned territories
     for (const cell of grid.getAllCells()) {
-      if (cell.owner === playerId) {
-        queue.push({ cell, dist: 0 });
-        visited.set(cell, 0);
-        cell.visible.add(playerId);
-        cell.explored.add(playerId);
+      if (cell.owner === activePlayer.id) {
+        hasOwned = true;
+        cell.visible.add(activePlayer.id);
+        cell.explored.add(activePlayer.id);
+        
+        // Grant vision to neighbors (radius 2)
+        const neighbors = grid.getNeighbors(cell.q, cell.r);
+        for (const n of neighbors) {
+          n.visible.add(activePlayer.id);
+          n.explored.add(activePlayer.id);
+          
+          const farNeighbors = grid.getNeighbors(n.q, n.r);
+          for (const fn of farNeighbors) {
+            fn.visible.add(activePlayer.id);
+            fn.explored.add(activePlayer.id);
+          }
+        }
       }
     }
 
-    // BFS for vision spread
-    let head = 0;
-    while (head < queue.length) {
-      const { cell, dist } = queue[head++];
-      
-      if (dist < VISION_RANGE) {
-        const neighbors = grid.getNeighbors(cell.q, cell.r);
-        for (const neighbor of neighbors) {
-          if (!visited.has(neighbor)) {
-            visited.set(neighbor, dist + 1);
-            neighbor.visible.add(playerId);
-            neighbor.explored.add(playerId);
-            queue.push({ cell: neighbor, dist: dist + 1 });
-          }
+    // If player has no territories, reveal all claimable land to allow manifestation
+    if (!hasOwned) {
+      for (const cell of grid.getAllCells()) {
+        if (cell.type === 'land' && cell.isClaimable) {
+          cell.visible.add(activePlayer.id);
         }
       }
     }
@@ -362,6 +360,8 @@ export class Renderer2D {
     ctx.shadowBlur = 12 * pulse;
     ctx.fillText(aspect.symbol, x, y);
     ctx.shadowBlur = 0;
+    
+    ctx.globalAlpha = 1.0;
   }
 
   // Bridged for main.js

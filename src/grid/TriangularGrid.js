@@ -48,12 +48,12 @@ export class TriangularGrid {
   hexToPixel(q, r, rotation = 'pointy') {
     const baseQ = Math.floor(q / 6);
     const baseR = r;
-    const t = ((q % 6) + 6) % 6;
+    const t = q % 6;
     
     const size = this.hexSize;
     let centerX, centerY;
     
-    if (rotation === 'pointy') {
+    if (rotation === 'flat') {
       centerX = size * (Math.sqrt(3) * baseQ + Math.sqrt(3)/2 * baseR);
       centerY = size * (3/2 * baseR);
     } else {
@@ -61,9 +61,8 @@ export class TriangularGrid {
       centerY = size * (Math.sqrt(3)/2 * baseQ + Math.sqrt(3) * baseR);
     }
     
-    const angleOffset = rotation === 'pointy' ? Math.PI / 6 : 0;
-    const angle = (t / 6) * Math.PI * 2 + angleOffset;
-    const nextAngle = ((t + 1) / 6) * Math.PI * 2 + angleOffset;
+    const angle = (t / 6) * Math.PI * 2 + (rotation === 'flat' ? Math.PI / 6 : 0);
+    const nextAngle = ((t + 1) / 6) * Math.PI * 2 + (rotation === 'flat' ? Math.PI / 6 : 0);
     
     return {
       x: centerX,
@@ -80,7 +79,7 @@ export class TriangularGrid {
     const size = this.hexSize;
     let baseQ, baseR;
     
-    if (rotation === 'pointy') {
+    if (rotation === 'flat') {
       baseQ = (Math.sqrt(3)/3 * x - 1/3 * y) / size;
       baseR = (2/3 * y) / size;
     } else {
@@ -89,15 +88,18 @@ export class TriangularGrid {
     }
     
     const rounded = this.axialRound(baseQ, baseR);
-    const pos = this.hexToPixel(rounded.q * 6, rounded.r, rotation);
-    const centerX = pos.x;
-    const centerY = pos.y;
+    const centerX = rotation === 'flat' 
+      ? size * (Math.sqrt(3) * rounded.q + Math.sqrt(3)/2 * rounded.r)
+      : size * (3/2 * rounded.q);
+    const centerY = rotation === 'flat'
+      ? size * (3/2 * rounded.r)
+      : size * (Math.sqrt(3)/2 * rounded.q + Math.sqrt(3) * rounded.r);
     
     const dx = x - centerX;
     const dy = y - centerY;
-    const angleOffset = rotation === 'pointy' ? Math.PI / 6 : 0;
-    const angle = Math.atan2(dy, dx) - angleOffset;
-    let t = Math.floor(((angle + Math.PI * 4) / (Math.PI * 2)) * 6) % 6;
+    const angle = Math.atan2(dy, dx);
+    let t = Math.floor(((angle + Math.PI + (rotation === 'flat' ? Math.PI / 6 : 0)) / (Math.PI * 2)) * 6) % 6;
+    if (t < 0) t += 6;
     
     return { q: rounded.q * 6 + t, r: rounded.r };
   }
@@ -130,30 +132,15 @@ export class TriangularGrid {
     const neighbors = [];
     const baseQ = Math.floor(q / 6);
     const baseR = r;
-    const t = ((q % 6) + 6) % 6;
+    const t = q % 6;
     
-    // 1 & 2: Adjacent triangles in the SAME hex
+    // Adjacent triangles in same hex
     const prev = (t + 5) % 6;
     const next = (t + 1) % 6;
     const prevCell = this.getCell(baseQ * 6 + prev, baseR);
     const nextCell = this.getCell(baseQ * 6 + next, baseR);
     if (prevCell) neighbors.push(prevCell);
     if (nextCell) neighbors.push(nextCell);
-    
-    // 3: Neighbor triangle in an ADJACENT hex
-    // Map triangle index to hex neighbor and opposite triangle index
-    const externalNeighbors = [
-      { dq: 1, dr: 0, dt: 3 },  // t=0 -> Right
-      { dq: 1, dr: -1, dt: 4 }, // t=1 -> Up-Right
-      { dq: 0, dr: -1, dt: 5 }, // t=2 -> Up-Left
-      { dq: -1, dr: 0, dt: 0 }, // t=3 -> Left
-      { dq: -1, dr: 1, dt: 1 }, // t=4 -> Down-Left
-      { dq: 0, dr: 1, dt: 2 }   // t=5 -> Down-Right
-    ];
-    
-    const ext = externalNeighbors[t];
-    const extCell = this.getCell((baseQ + ext.dq) * 6 + ext.dt, baseR + ext.dr);
-    if (extCell) neighbors.push(extCell);
     
     return neighbors;
   }
