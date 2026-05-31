@@ -33,13 +33,13 @@ In the power vacuum left by the gods, seven mortal factions have risen, each bea
 
 Each Aspect represents a primal force with inherent cosmic opposition:
 
-- **Radiance**: The piercing light that banishes shadow but is reflected by water
-- **Umbra**: The encompassing darkness that smothers light but is consumed by fire
-- **Tempest**: The raging storm that scatters flame but is grounded by earth
-- **Terra**: The unyielding stone that withstands tempest but is eroded by tide
-- **Pyre**: The eternal fire that burns through shadow but is quenched by water
-- **Tide**: The flowing sea that drowns earth but evaporates before radiance
-- **Aether**: The infinite void that absorbs all yet disperses when concentrated
+- **Radiance**: The piercing light that banishes shadow, storm, and fire.
+- **Umbra**: The encompassing darkness that smothers storm, earth, and tide.
+- **Tempest**: The raging storm that scatters earth, fire, and void.
+- **Terra**: The unyielding stone that withstands fire, tide, and radiance.
+- **Pyre**: The eternal fire that consumes water, void, and shadow.
+- **Tide**: The flowing sea that reflects void, light, and storm.
+- **Aether**: The infinite void that absorbs light, shadow, and earth.
 
 These relationships are not merely symbolic - they represent the fundamental laws by which divine power interacts.
 

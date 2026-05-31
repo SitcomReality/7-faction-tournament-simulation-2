@@ -9,17 +9,17 @@ In the aftermath of the Godsfall, seven Divine Aspects remain scattered across t
 Seven primal forces with cosmic opposition embedded in their nature. Each Aspect:
 - Manifests through unique sacred geometry (SVG symbol)
 - Resonates with a specific color of divine light
-- Forms natural dominion over two others while yielding to two others (2-paradoxical cosmic wheel)
+- Forms natural dominion over three others while yielding to three others (Paley 7-tournament)
 - Grants unique tactical advantages when invoked
 
 **The Aspects:**
-1. **Radiance** (Light/Sun) - Pierces shadow, blinds storm
-2. **Umbra** (Shadow/Moon) - Smothers radiance, drowns earth  
-3. **Tempest** (Storm/Sky) - Scatters fire, erodes earth
-4. **Terra** (Earth/Stone) - Grounds tempest, ossifies tide
-5. **Pyre** (Fire/Forge) - Consumes umbra, evaporates tide
-6. **Tide** (Water/Sea) - Quenches pyre, reflects radiance
-7. **Aether** (Void/Stars) - Absorbs terra, disperses tempest
+1. **Radiance** (Light/Sun) - Pierces shadow, storm, and fire
+2. **Umbra** (Shadow/Moon) - Smothers storm, earth, and tide
+3. **Tempest** (Storm/Sky) - Scatters earth, fire, and void
+4. **Terra** (Earth/Stone) - Grounds fire, tide, and radiance
+5. **Pyre** (Fire/Forge) - Consumes water, void, and shadow
+6. **Tide** (Water/Sea) - Reflects void, light, and storm
+7. **Aether** (Void/Stars) - Absorbs light, shadow, and earth
 
 ### The Claimant Houses
 1-7 divine champions or fallen houses competing to restore cosmic balance:
