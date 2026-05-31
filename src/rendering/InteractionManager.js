@@ -123,7 +123,7 @@ export class InteractionManager {
         const player = gameState.players[gameState.activePlayer];
         const action = new ManifestAction(player.id, gameState.selectedAspect, coords.q, coords.r);
         
-        if (gameEngine.queueAction(player.id, action)) {
+        if (gameEngine.queueAction(player.id, action, gameState)) {
           console.log(`Queued manifestation of aspect ${gameState.selectedAspect} at ${coords.q},${coords.r}`);
           document.dispatchEvent(new CustomEvent('actionQueued'));
           gameState.selectedAspect = null; // Deselect after queuing

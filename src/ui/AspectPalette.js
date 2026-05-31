@@ -94,7 +94,8 @@ export class AspectPalette {
           // Attempt awakening
           if (player.canAffordAwakening()) {
             const action = new AwakenAction(player.id, id);
-            if (this.gameEngine.queueAction(player.id, action)) {
+            // Pass current gameState so the engine/turn manager can validate immediately
+            if (this.gameEngine.queueAction(player.id, action, this.gameState)) {
               console.log(`Queued awakening for aspect ${id}`);
               document.dispatchEvent(new CustomEvent('actionQueued'));
             }

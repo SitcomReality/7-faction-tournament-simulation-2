@@ -46,8 +46,9 @@ export class GameEngine {
     return this.turnManager.endTurn(gameState, grid);
   }
 
-  queueAction(playerId, action) {
-    return this.turnManager.queueAction(playerId, action);
+  queueAction(playerId, action, gameState) {
+    // Pass the current gameState down so actions can validate against it immediately
+    return this.turnManager.queueAction(playerId, action, gameState);
   }
 
   getQueuedActions(playerId) {

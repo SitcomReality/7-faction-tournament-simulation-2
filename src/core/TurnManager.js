@@ -15,7 +15,7 @@ export class TurnManager {
     this.currentPhase = 'planning';
   }
 
-  queueAction(playerId, action) {
+  queueAction(playerId, action, gameState) {
     if (this.currentPhase !== 'planning') {
       console.warn('Cannot queue actions outside planning phase');
       return false;
@@ -26,8 +26,8 @@ export class TurnManager {
       return false;
     }
 
-    // Validate action
-    if (!action.validate()) {
+    // Validate action (pass gameState so actions that need player/state info can validate)
+    if (!action.validate(gameState)) {
       console.warn('Action validation failed');
       return false;
     }
