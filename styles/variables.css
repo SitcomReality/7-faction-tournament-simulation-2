@@ -1,0 +1,8 @@
+:root {
+  --bg-dark: #050508;
+  --bg-panel: rgba(10, 10, 20, 0.85);
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --accent-glow: rgba(255, 255, 255, 0.05);
+}

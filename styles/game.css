@@ -1,0 +1,164 @@
+/* Factions & Entities */
+.faction-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.faction-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.faction-chip.selected {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #4CAF50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+.faction-chip .faction-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.faction-chip .faction-count {
+  font-size: 11px;
+  font-family: monospace;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Aspect Palette */
+.aspect-palette {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+.aspect-grid {
+  display: flex;
+  gap: 6px;
+}
+
+.aspect-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  position: relative;
+}
+
+.aspect-btn.awakened:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.aspect-btn.selected {
+  border-color: #4CAF50;
+  background: rgba(76, 175, 80, 0.1);
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+}
+
+.aspect-btn.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.aspect-symbol {
+  font-size: 20px;
+}
+
+.lock-icon {
+  position: absolute;
+  font-size: 10px;
+  bottom: -2px;
+  right: -2px;
+  background: #222;
+  border-radius: 50%;
+  padding: 2px;
+}
+
+.essence-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.essence-icon { font-size: 14px; }
+.essence-value { font-weight: bold; color: #4CAF50; font-size: 14px; }
+.essence-label { font-size: 8px; text-transform: uppercase; opacity: 0.6; }
+
+.awakening-info {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.affordable { color: #4CAF50; }
+.unaffordable { color: #FF5252; }
+
+/* Paint Controls */
+.paint-options {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+}
+
+.paint-option {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid transparent;
+  border-radius: 8px;
+}
+
+.paint-option .paint-icon {
+  font-size: 20px;
+}
+
+.paint-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.paint-option.selected {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #4CAF50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+/* Theme Block */
+.theme-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.theme-row select {
+  flex: 1;
+  margin: 0;
+}
