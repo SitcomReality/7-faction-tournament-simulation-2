@@ -173,3 +173,14 @@ body {
 .setup-btn.primary:hover {
   background: rgba(76, 175, 80, 0.3);
 }
+
+@keyframes essenceFloat {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}

@@ -53,6 +53,11 @@ export class Renderer2D {
     ctx.fillRect(0, 0, width, height);
     fxCtx.clearRect(0, 0, width, height);
 
+    // 2. Update visibility if fog enabled
+    if (gameState.fogOfWarEnabled && grid) {
+      this.updateFogOfWar(grid, gameState);
+    }
+
     // 3. Setup transforms
     ctx.save();
     fxCtx.save();
@@ -110,8 +115,13 @@ export class Renderer2D {
         ctx.fill();
         ctx.stroke();
         
+        const triangleActivePlayer = gameState.players[gameState.activePlayer];
         if (cell.unitType !== null) {
-          this.drawUnit(ctx, pos.x, pos.y, cell.unitType);
+          if (!gameState.fogOfWarEnabled || !triangleActivePlayer || cell.visible.has(triangleActivePlayer.id)) {
+            this.drawUnit(ctx, pos.x, pos.y, cell.unitType);
+          } else if (cell.explored.has(triangleActivePlayer.id)) {
+            this.drawUnit(ctx, pos.x, pos.y, cell.unitType, 0.2);
+          }
         }
         
         if (this.interaction.hoveredCoords && 
@@ -120,9 +130,7 @@ export class Renderer2D {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.fill();
             if (gameState.selectedAspect !== null) {
-                ctx.globalAlpha = 0.5;
-                this.drawUnit(ctx, pos.x, pos.y, gameState.selectedAspect);
-                ctx.globalAlpha = 1.0;
+                this.drawUnit(ctx, pos.x, pos.y, gameState.selectedAspect, 0.5);
             }
         }
       }
@@ -146,8 +154,13 @@ export class Renderer2D {
         ctx.fillRect(pos.x - halfSize, pos.y - halfSize, pos.size, pos.size);
         ctx.strokeRect(pos.x - halfSize, pos.y - halfSize, pos.size, pos.size);
         
+        const activePlayer = gameState.players[gameState.activePlayer];
         if (cell.unitType !== null) {
-          this.drawUnit(ctx, pos.x, pos.y, cell.unitType);
+          if (!gameState.fogOfWarEnabled || !activePlayer || cell.visible.has(activePlayer.id)) {
+            this.drawUnit(ctx, pos.x, pos.y, cell.unitType);
+          } else if (cell.explored.has(activePlayer.id)) {
+            this.drawUnit(ctx, pos.x, pos.y, cell.unitType, 0.2);
+          }
         }
         
         if (this.interaction.hoveredCoords && 
@@ -156,9 +169,7 @@ export class Renderer2D {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.fillRect(pos.x - halfSize, pos.y - halfSize, pos.size, pos.size);
             if (gameState.selectedAspect !== null) {
-                ctx.globalAlpha = 0.5;
-                this.drawUnit(ctx, pos.x, pos.y, gameState.selectedAspect);
-                ctx.globalAlpha = 1.0;
+                this.drawUnit(ctx, pos.x, pos.y, gameState.selectedAspect, 0.5);
             }
         }
       }
@@ -178,8 +189,13 @@ export class Renderer2D {
         const fillColor = gameState.showHexFill === false ? gameState.theme.neutral : color;
         this.hexRenderer.drawFill(ctx, x, y, path, fillColor, gameState.theme.background);
         
+        const activePlayer = gameState.players[gameState.activePlayer];
         if (cell.unitType !== null) {
-          this.drawUnit(ctx, x, y, cell.unitType);
+          if (!gameState.fogOfWarEnabled || !activePlayer || cell.visible.has(activePlayer.id)) {
+            this.drawUnit(ctx, x, y, cell.unitType);
+          } else if (cell.explored.has(activePlayer.id)) {
+            this.drawUnit(ctx, x, y, cell.unitType, 0.2);
+          }
         }
         
         // Draw hover preview
@@ -191,10 +207,8 @@ export class Renderer2D {
             this.hexRenderer.drawFill(ctx, x, y, path, ctx.fillStyle, 'rgba(255,255,255,0.5)');
             
             if (gameState.selectedAspect !== null) {
-                // Ghost unit
-                ctx.globalAlpha = 0.5;
-                this.drawUnit(ctx, x, y, gameState.selectedAspect);
-                ctx.globalAlpha = 1.0;
+                // Ghost unit with alpha parameter
+                this.drawUnit(ctx, x, y, gameState.selectedAspect, 0.5);
             }
         }
       }
@@ -204,11 +218,53 @@ export class Renderer2D {
     fxCtx.restore();
   }
 
+  updateFogOfWar(grid, gameState) {
+    const activePlayer = gameState.players[gameState.activePlayer];
+    if (!activePlayer) return;
+    
+    // Clear current visibility
+    for (const cell of grid.getAllCells()) {
+      cell.visible.delete(activePlayer.id);
+    }
+    
+    // Grant vision from owned territories
+    for (const cell of grid.getAllCells()) {
+      if (cell.owner === activePlayer.id) {
+        cell.visible.add(activePlayer.id);
+        cell.explored.add(activePlayer.id);
+        
+        // Grant vision to neighbors
+        const neighbors = grid.getNeighbors(cell.q, cell.r);
+        for (const n of neighbors) {
+          n.visible.add(activePlayer.id);
+          n.explored.add(activePlayer.id);
+        }
+      }
+    }
+  }
+
   getCellColor(cell, gameState) {
+    const activePlayer = gameState.players[gameState.activePlayer];
+    
+    // Fog of war rendering
+    if (gameState.fogOfWarEnabled && activePlayer) {
+      if (!cell.explored.has(activePlayer.id)) {
+        // Unexplored: pure black
+        return '#000000';
+      }
+      if (!cell.visible.has(activePlayer.id)) {
+        // Explored but not visible: darkened
+        const baseColor = this.getBaseCellColor(cell, gameState);
+        return this.darkenColor(baseColor, 0.3);
+      }
+    }
+    
+    return this.getBaseCellColor(cell, gameState);
+  }
+  
+  getBaseCellColor(cell, gameState) {
     if (cell.type === 'ocean') return gameState.theme.ocean;
     
-    // In phase 1, we just return neutral or owner color (if we had players setup).
-    // For now, if there's an owner, we'd use their color, but we'll map unitType to theme colors just to see something temporarily
     if (cell.unitType !== null) {
         return gameState.theme.factions[cell.unitType] || gameState.theme.neutral;
     }
@@ -217,6 +273,20 @@ export class Renderer2D {
     }
     
     return gameState.theme.neutral;
+  }
+  
+  darkenColor(hexColor, factor) {
+    if (!hexColor || hexColor[0] !== '#') return hexColor;
+    
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+    
+    const dr = Math.floor(r * factor);
+    const dg = Math.floor(g * factor);
+    const db = Math.floor(b * factor);
+    
+    return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
   }
 
   spawnParticles(x, y, colorStr, count = 15) {
@@ -246,7 +316,7 @@ export class Renderer2D {
     }
   }
 
-  drawUnit(ctx, x, y, aspectId) {
+  drawUnit(ctx, x, y, aspectId, alpha = 1) {
     const aspect = ASPECTS[aspectId];
     if (!aspect) return;
 
@@ -256,14 +326,14 @@ export class Renderer2D {
     // Outer glow ring
     ctx.strokeStyle = aspect.color;
     ctx.lineWidth = 2;
-    ctx.globalAlpha = 0.4 * pulse;
+    ctx.globalAlpha = 0.4 * pulse * alpha;
     ctx.beginPath();
     ctx.arc(x, y, 12, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = alpha;
     
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.font = 'bold 16px Space Mono';
+    ctx.font = 'bold 18px Space Mono';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     

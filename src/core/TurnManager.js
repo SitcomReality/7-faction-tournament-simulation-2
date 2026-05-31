@@ -50,7 +50,8 @@ export class TurnManager {
     document.dispatchEvent(new CustomEvent('turnAdvanced', { 
       detail: { 
         turn: gameState.currentTurn, 
-        activePlayer: gameState.activePlayer 
+        activePlayer: gameState.activePlayer,
+        essenceGenerated: generated
       }
     }));
   }

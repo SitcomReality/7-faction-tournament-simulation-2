@@ -13,7 +13,10 @@ export class GameState {
     this.players = [];
     this.activePlayer = 0;
     this.currentTurn = 1;
-    this.turnPhase = 'planning'; // 'planning', 'resolution', 'cleanup'
+    this.turnPhase = 'active'; // simplified turn phase
+    
+    // Fog of war toggle
+    this.fogOfWarEnabled = false;
     
     // Generation parameters
     this.mapType = localStorage.getItem('sim_mapType') || 'land'; 

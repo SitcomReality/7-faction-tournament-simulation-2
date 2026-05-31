@@ -54,7 +54,7 @@ The Supernal Interregnum now has a fast, tactile core loop: you can Awaken Aspec
 ⚠️ **Remaining / Nice-to-have:**
 - [ ] Replace emoji symbols with final sacred-geometry SVGs and draw them consistently in both grid and CosmicWheel
 - [ ] Add a lightweight tooltip/legend overlay explaining the wheel (especially on mobile)  
-- [ ] Surface Essence income more clearly per turn in the HUD (e.g., "+3 ✨ this turn" micro-feedback)
+- [x] Surface Essence income more clearly per turn in the HUD (e.g., "+3 ✨ this turn" micro-feedback) ✓
 
 **Design Note:** The Aspects layer already supports deep strategy; the biggest UX gains now come from explanation and surface polish, not new rules.
 
@@ -81,19 +81,26 @@ The Supernal Interregnum now has a fast, tactile core loop: you can Awaken Aspec
 
 ---
 
-## Phase 5: The Veil of Knowing (Fog of War) ⏸️ NOT STARTED (STRUCTURAL HOOKS READY)
+## Phase 5: The Veil of Knowing (Fog of War) 🚧 BASIC IMPLEMENTATION COMPLETE
 
-**Status:** No fog logic or rendering yet, but `Cell.visible`/`explored` Sets already exist and can be used.
+**Status:** Fog of war is now functional with basic visibility rules and rendering!
 
-**What's needed:**
-- [ ] Define vision sources (owned cells vs manifested Aspects vs future "scout" mechanics) and ranges
-- [ ] Implement per-player visibility recalculation on each action/turn
-- [ ] Fog rendering in `Renderer2D` (unexplored → black, explored-not-visible → dimmed, visible → normal)
-- [ ] Adjust unit rendering to hide/ghost enemy Aspects in fog
-- [ ] Optionally add fog toggle in settings (with clear "for learning only" warning)
-- [ ] Optional: minimap stub that reuses fog data
+✅ Added `fogOfWarEnabled` toggle to GameState and VisualSettings UI
+✅ Implemented `updateFogOfWar` in Renderer2D that grants vision from owned territories
+✅ Vision system: owned cells + immediate neighbors are visible and explored
+✅ Fog rendering: unexplored cells show pure black, explored-but-not-visible show darkened colors
+✅ Unit visibility: hidden units in unexplored areas, ghosted units (20% alpha) in explored-but-not-visible
+✅ Fog recalculates every frame for active player based on their owned territory
 
-**UX Note:** When you add fog, pair it with subtle reveal animations and a clear "you just discovered X more Sanctums" prompt to keep exploration feeling rewarding rather than confusing.
+🚧 **To enhance:**
+- [ ] Add vision range for manifested Aspects (e.g., Radiance sees further)
+- [ ] Optimize fog calculation to only update on ownership changes, not every frame
+- [ ] Add reveal animations when discovering new areas
+- [ ] Show "X new Sanctums revealed" feedback when fog lifts
+- [ ] Add minimap with fog overlay
+- [ ] Persist explored state across turns (currently resets per player's perspective)
+
+**UX Note:** Fog adds strategic depth immediately; next steps should focus on making exploration feel rewarding with animations and discovery feedback.
 
 ---
 
@@ -133,7 +140,7 @@ The Supernal Interregnum now has a fast, tactile core loop: you can Awaken Aspec
 - [ ] Replace emojis with consistent sacred-geometry icons across UI and grid
 - [ ] Add a compact "What beats what?" legend accessible from the bottom bar for first-time players
 - [ ] Improve mobile ergonomics: slightly larger tap targets for palette/aspect buttons and bottom-bar controls
-- [ ] Add micro-feedback for Essence changes (e.g., a brief "+2 ✨" float near the Essence display each turn)
+- [x] Add micro-feedback for Essence changes (e.g., a brief "+2 ✨" float near the Essence display each turn) ✓
 - [ ] Animate panel show/hide with slightly shorter durations for snappier feel on mobile
 - [ ] Add subtle hover/tap outlines for valid Manifest cells when an Aspect is selected
 

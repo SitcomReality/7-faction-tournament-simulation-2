@@ -19,6 +19,14 @@ export class VisualSettings {
         </label>
       </div>
       
+      <div class="setting-row">
+        <span>Fog of War</span>
+        <label class="toggle">
+          <input type="checkbox" id="fog-toggle" ${this.gameState.fogOfWarEnabled ? 'checked' : ''}>
+          <span class="slider"></span>
+        </label>
+      </div>
+      
       <div class="setting-row" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-subtle);">
         <span>Map Orientation</span>
         <button id="rotate-btn" style="padding: 4px 12px; font-size: 10px;">🔄 Rotate View</button>
@@ -33,6 +41,12 @@ export class VisualSettings {
     const hexFillToggle = document.getElementById('hex-fill-toggle');
     hexFillToggle.addEventListener('change', (e) => {
       this.gameState.showHexFill = e.target.checked;
+    });
+
+    const fogToggle = document.getElementById('fog-toggle');
+    fogToggle.addEventListener('change', (e) => {
+      this.gameState.fogOfWarEnabled = e.target.checked;
+      document.dispatchEvent(new CustomEvent('fogOfWarToggled'));
     });
 
     // Rotate Map button

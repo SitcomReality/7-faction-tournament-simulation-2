@@ -15,9 +15,39 @@ export class AspectPalette {
   }
 
   setupEventListeners() {
-    document.addEventListener('turnAdvanced', () => this.render());
+    document.addEventListener('turnAdvanced', (e) => {
+      this.showEssenceGain(e.detail.essenceGenerated);
+      this.render();
+    });
     document.addEventListener('aspectAwakened', () => this.render());
     document.addEventListener('actionExecuted', () => this.render());
+  }
+
+  showEssenceGain(amount) {
+    if (!amount || amount <= 0) return;
+    
+    // Find essence display and create floating feedback
+    const essenceDisplay = document.querySelector('.essence-display');
+    if (!essenceDisplay) return;
+    
+    const feedback = document.createElement('div');
+    feedback.textContent = `+${amount} ✨`;
+    feedback.style.cssText = `
+      position: absolute;
+      color: #4CAF50;
+      font-weight: bold;
+      font-size: 14px;
+      pointer-events: none;
+      animation: essenceFloat 1.5s ease-out forwards;
+    `;
+    
+    const rect = essenceDisplay.getBoundingClientRect();
+    feedback.style.left = rect.left + rect.width / 2 + 'px';
+    feedback.style.top = rect.top + 'px';
+    
+    document.body.appendChild(feedback);
+    
+    setTimeout(() => feedback.remove(), 1500);
   }
 
   render() {
