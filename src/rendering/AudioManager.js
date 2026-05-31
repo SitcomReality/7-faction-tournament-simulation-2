@@ -28,8 +28,9 @@ export class AudioManager {
   }
 
   playClash() {
-    this.playTone(150, 'sawtooth', 0.4, 0.2);
-    this.playTone(100, 'square', 0.4, 0.2);
+    this.playTone(150, 'sawtooth', 0.4, 0.15);
+    this.playTone(100, 'square', 0.4, 0.15);
+    setTimeout(() => this.playTone(200, 'sine', 0.3, 0.1), 100);
   }
   
   playAwaken() {

@@ -87,9 +87,14 @@ export class SystemOrchestrator {
     });
 
     document.addEventListener('divineClash', (e) => {
-      const { q, r } = e.detail;
+      const { q, r, winner } = e.detail;
       const pos = this.worldController.grid.hexToPixel(q, r, this.gameState.hexRotation);
-      if (this.renderer) this.renderer.spawnParticles(pos.x || 0, pos.y || 0, '#FFFFFF');
+      
+      // More dramatic particle effect for clashes
+      if (this.renderer) {
+        this.renderer.spawnParticles(pos.x || 0, pos.y || 0, '#FFD700', 25);
+        setTimeout(() => this.renderer.spawnParticles(pos.x || 0, pos.y || 0, '#FF4500', 20), 150);
+      }
       if (this.audio) this.audio.playClash();
     });
 

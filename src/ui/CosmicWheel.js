@@ -97,6 +97,9 @@ export class CosmicWheel {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.size, this.size);
     
+    // Request animation frame for pulsing effect
+    requestAnimationFrame(() => this.render());
+    
     const activeNode = this.hoveredNode;
     const highlightedEdges = [];
     const normalEdges = [];
@@ -135,9 +138,25 @@ export class CosmicWheel {
     const isHovered = this.hoveredNode === index;
     const isAwakened = this.gameState.players[this.gameState.activePlayer]?.hasAwakenedAspect(index);
     
+    // Pulsing glow for awakened aspects
+    if (isAwakened && !isHovered) {
+      const pulse = Math.sin(Date.now() * 0.003) * 0.3 + 0.7;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 10 * pulse;
+      
+      // Draw glow ring
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.3 * pulse;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, this.nodeRadius + 4, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    
     if (isHovered) {
       ctx.shadowColor = color;
-      ctx.shadowBlur = 15;
+      ctx.shadowBlur = 20;
     }
     
     ctx.fillStyle = isAwakened ? color : 'rgba(40, 40, 60, 0.8)';
@@ -151,11 +170,19 @@ export class CosmicWheel {
     
     ctx.shadowBlur = 0;
     
+    // Symbol with subtle glow for awakened
+    if (isAwakened) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 5;
+    }
+    
     ctx.fillStyle = isAwakened ? '#000' : 'rgba(255, 255, 255, 0.4)';
     ctx.font = 'bold 16px Space Mono';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(aspect.symbol, pos.x, pos.y);
+    
+    ctx.shadowBlur = 0;
 
     if (isHovered) {
         ctx.fillStyle = 'white';

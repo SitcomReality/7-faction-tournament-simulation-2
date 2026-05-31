@@ -219,7 +219,7 @@ export class Renderer2D {
     return gameState.theme.neutral;
   }
 
-  spawnParticles(x, y, colorStr) {
+  spawnParticles(x, y, colorStr, count = 15) {
     // Parse hex to rgb roughly or just use a nice white/gold
     let rgb = '255, 215, 0'; // default gold
     if (colorStr.startsWith('#')) {
@@ -230,7 +230,7 @@ export class Renderer2D {
       rgb = `${r}, ${g}, ${b}`;
     }
 
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = Math.random() * 2 + 1;
       this.particles.push({
@@ -250,14 +250,26 @@ export class Renderer2D {
     const aspect = ASPECTS[aspectId];
     if (!aspect) return;
 
+    // Pulsing divine glow
+    const pulse = Math.sin(Date.now() * 0.002) * 0.3 + 0.7;
+    
+    // Outer glow ring
+    ctx.strokeStyle = aspect.color;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.4 * pulse;
+    ctx.beginPath();
+    ctx.arc(x, y, 12, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.font = 'bold 16px Space Mono';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    // Add a small shadow/glow to make the emoji pop
+    // Divine radiance
     ctx.shadowColor = aspect.color;
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 12 * pulse;
     ctx.fillText(aspect.symbol, x, y);
     ctx.shadowBlur = 0;
   }
