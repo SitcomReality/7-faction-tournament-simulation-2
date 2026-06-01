@@ -4,7 +4,6 @@
 import { GenerationSettings } from './GenerationSettings.js';
 import { VisualSettings } from './VisualSettings.js';
 import { CosmicWheel } from './CosmicWheel.js';
-import { AspectPalette } from './AspectPalette.js';
 import { PlayersPanel } from './PlayersPanel.js';
 
 export class HUD {
@@ -21,7 +20,6 @@ export class HUD {
     this.generationSettings = null;
     this.playersPanel = null;
     this.cosmicWheel = null;
-    this.aspectPalette = null;
     this.isVisible = true;
   }
 
@@ -31,11 +29,6 @@ export class HUD {
 
     this.cosmicWheel = new CosmicWheel(
       document.getElementById('cosmic-wheel-container'),
-      this.gameState
-    );
-
-    this.aspectPalette = new AspectPalette(
-      document.getElementById('aspect-palette-container'),
       this.gameState,
       this.gameEngine
     );
@@ -125,8 +118,6 @@ export class HUD {
       <div id="bottom-bar">
         <button id="toggle-graph-btn" class="bar-btn" title="Toggle Cosmic Wheel">🔀</button>
         
-        <div id="aspect-palette-container"></div>
-
         <div class="turn-info">
           <span class="turn-counter">Turn <span id="turn-number">1</span></span>
           <span class="turn-phase" id="turn-phase">Active</span>

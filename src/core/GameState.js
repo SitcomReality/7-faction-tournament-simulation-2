@@ -30,6 +30,7 @@ export class GameState {
     // Paint tool state
     this.paintMode = 'land';
     this.selectedAspect = null;
+    this.hoveredAspectId = null;
 
     // Visual settings
     this.currentTheme = 'default';

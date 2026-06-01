@@ -1,21 +1,23 @@
 /**
- * CosmicWheel - Interactive visualization of the immutable Divine Aspects relationships
+ * CosmicWheel - Interactive visualization and primary control for Divine Aspects
  */
 import { ASPECTS, aspectDominates } from '../core/DivineAspect.js';
 import { AspectIcons } from './AspectIcons.js';
+import { AwakenAction } from '../core/Action.js';
 
 export class CosmicWheel {
-  constructor(container, gameState) {
+  constructor(container, gameState, gameEngine) {
     this.container = container;
     this.gameState = gameState;
+    this.gameEngine = gameEngine;
     
     this.canvas = null;
     this.ctx = null;
     this.size = 260;
     this.centerX = this.size / 2;
     this.centerY = this.size / 2;
-    this.radius = 85;
-    this.nodeRadius = 22;
+    this.radius = 80;
+    this.nodeRadius = 20;
     
     this.hoveredNode = null;
     
@@ -27,14 +29,23 @@ export class CosmicWheel {
   createUI() {
     this.container.innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 12px;">
-        <canvas id="cosmic-wheel-canvas" width="${this.size}" height="${this.size}" 
-                style="border-radius: 8px; background: rgba(0,0,0,0.3); cursor: default; touch-action: none;"></canvas>
-        
-        <div style="font-size: 10px; opacity: 0.6; text-align: center;">
-          The Cosmic Wheel (Immutable Divine Law)
+        <div id="wheel-essence-display" style="display: flex; justify-content: space-between; align-items: center; padding: 0 8px;">
+           <div class="essence-display">
+            <span class="essence-icon">✨</span>
+            <span class="essence-value" id="wheel-essence-val">0</span>
+            <span class="essence-label">Essence</span>
+          </div>
+          <div id="wheel-awakening-cost" class="awakening-info" style="text-align: right;"></div>
         </div>
 
-        <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 8px 0;">
+        <canvas id="cosmic-wheel-canvas" width="${this.size}" height="${this.size}" 
+                style="border-radius: 8px; background: rgba(0,0,0,0.3); cursor: pointer; touch-action: none;"></canvas>
+        
+        <div id="wheel-status-text" style="font-size: 10px; height: 12px; opacity: 0.6; text-align: center;">
+          Tap an aspect to select or awaken
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 4px 0;">
 
         <div class="theme-row" style="margin-top: 0; padding-top: 0; border-top: none;">
           <select id="theme-select" title="Theme">
@@ -60,6 +71,15 @@ export class CosmicWheel {
     this.canvas.addEventListener('mouseleave', () => {
       this.hoveredNode = null;
       this.render();
+    });
+
+    this.canvas.addEventListener('click', (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const nodeId = this.getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
+      
+      if (nodeId !== null) {
+        this.handleNodeClick(nodeId);
+      }
     });
     
     const themeSelect = this.container.querySelector('#theme-select');
@@ -93,6 +113,29 @@ export class CosmicWheel {
     };
   }
 
+  handleNodeClick(aspectId) {
+    const player = this.gameState.players[this.gameState.activePlayer];
+    if (!player) return;
+
+    const isAwakened = player.hasAwakenedAspect(aspectId);
+
+    if (isAwakened) {
+      // Toggle selection for manifestation
+      if (this.gameState.selectedAspect === aspectId) {
+        this.gameState.selectedAspect = null;
+      } else {
+        this.gameState.selectedAspect = aspectId;
+      }
+    } else {
+      // Attempt awakening
+      if (player.canAffordAwakening()) {
+        const action = new AwakenAction(player.id, aspectId);
+        this.gameEngine.executeAction(player.id, action, this.gameState, null);
+      }
+    }
+    this.render();
+  }
+
   render() {
     if (!this.ctx) return;
     const ctx = this.ctx;
@@ -103,9 +146,39 @@ export class CosmicWheel {
     }
     this.animationFrame = requestAnimationFrame(() => this.render());
 
+    // Update UI text elements
+    const player = this.gameState.players[this.gameState.activePlayer];
+    if (player) {
+      const essVal = document.getElementById('wheel-essence-val');
+      if (essVal) essVal.textContent = player.essence;
+      
+      const awkInfo = document.getElementById('wheel-awakening-cost');
+      if (awkInfo) {
+        const cost = player.getAwakeningCost();
+        const canAfford = player.canAffordAwakening();
+        if (player.awakenedAspects.size < 7) {
+          awkInfo.innerHTML = `Next Awaken: <span class="${canAfford ? 'affordable' : 'unaffordable'}">${cost} ✨</span>`;
+        } else {
+          awkInfo.innerHTML = `<span style="color: #4CAF50;">All Aspects Awakened</span>`;
+        }
+      }
+
+      const statusText = document.getElementById('wheel-status-text');
+      if (statusText) {
+        if (this.hoveredNode !== null || this.gameState.hoveredAspectId !== null) {
+          const target = this.hoveredNode !== null ? this.hoveredNode : this.gameState.hoveredAspectId;
+          const aspect = ASPECTS[target];
+          statusText.textContent = aspect.name;
+        } else {
+          statusText.textContent = "Select an aspect to manifest";
+        }
+      }
+    }
+
     ctx.clearRect(0, 0, this.size, this.size);
     
-    const activeNode = this.hoveredNode;
+    // Priority: hovered mouse node, then grid hovered aspect
+    const activeNode = this.hoveredNode !== null ? this.hoveredNode : this.gameState.hoveredAspectId;
     const highlightedEdges = [];
     const normalEdges = [];
 
@@ -140,7 +213,9 @@ export class CosmicWheel {
     const color = aspect.color;
     const ctx = this.ctx;
     
-    const isHovered = this.hoveredNode === index;
+    const activeNode = this.hoveredNode !== null ? this.hoveredNode : this.gameState.hoveredAspectId;
+    const isHovered = activeNode === index;
+    const isSelected = this.gameState.selectedAspect === index;
     const isAwakened = this.gameState.players[this.gameState.activePlayer]?.hasAwakenedAspect(index);
     
     // Pulsing glow for awakened aspects
@@ -165,8 +240,8 @@ export class CosmicWheel {
     }
     
     ctx.fillStyle = isAwakened ? color : 'rgba(40, 40, 60, 0.8)';
-    ctx.strokeStyle = isAwakened ? 'white' : 'rgba(255, 255, 255, 0.2)';
-    ctx.lineWidth = isAwakened ? 2 : 1;
+    ctx.strokeStyle = isSelected ? '#4CAF50' : (isAwakened ? 'white' : 'rgba(255, 255, 255, 0.2)');
+    ctx.lineWidth = (isAwakened || isSelected) ? 3 : 1;
     
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, this.nodeRadius, 0, Math.PI * 2);
@@ -203,14 +278,14 @@ export class CosmicWheel {
     const dx = toPos.x - fromPos.x;
     const dy = toPos.y - fromPos.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    const ratio = (dist - this.nodeRadius) / dist;
+    const ratio = (dist - (this.nodeRadius + 4)) / dist;
     
     const endX = fromPos.x + dx * ratio;
     const endY = fromPos.y + dy * ratio;
     
     const ctx = this.ctx;
     
-    const activeNode = this.hoveredNode;
+    const activeNode = this.hoveredNode !== null ? this.hoveredNode : this.gameState.hoveredAspectId;
     let edgeColor = 'rgba(255, 255, 255, 0.15)';
     let arrowColor = 'rgba(255, 255, 255, 0.3)';
     let lineWidth = 1;

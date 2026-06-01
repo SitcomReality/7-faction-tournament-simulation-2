@@ -131,6 +131,14 @@ export class InteractionManager {
       this.canvas.height
     );
     this.hoveredCoords = this.grid.pixelToHex(worldPos.x, worldPos.y, this.gameState.hexRotation);
+    
+    // Sync aspect hover state for the Cosmic Wheel
+    const cell = this.grid.getCell(this.hoveredCoords.q, this.hoveredCoords.r);
+    if (cell && cell.unitType !== null) {
+      this.gameState.hoveredAspectId = cell.unitType;
+    } else {
+      this.gameState.hoveredAspectId = null;
+    }
   }
 
   handlePaint(clientX, clientY) {
