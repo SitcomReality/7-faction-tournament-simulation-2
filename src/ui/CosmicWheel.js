@@ -2,6 +2,7 @@
  * CosmicWheel - Interactive visualization of the immutable Divine Aspects relationships
  */
 import { ASPECTS, aspectDominates } from '../core/DivineAspect.js';
+import { AspectIcons } from './AspectIcons.js';
 
 export class CosmicWheel {
   constructor(container, gameState) {
@@ -176,11 +177,11 @@ export class CosmicWheel {
       ctx.shadowBlur = 5;
     }
     
-    ctx.fillStyle = isAwakened ? '#000' : 'rgba(255, 255, 255, 0.4)';
-    ctx.font = 'bold 16px Space Mono';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(aspect.symbol, pos.x, pos.y);
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    ctx.strokeStyle = isAwakened ? '#000' : 'rgba(255, 255, 255, 0.4)';
+    AspectIcons.draw(ctx, index, 10);
+    ctx.restore();
     
     ctx.shadowBlur = 0;
 

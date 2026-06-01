@@ -3,6 +3,7 @@
  */
 import { ASPECTS } from '../core/DivineAspect.js';
 import { AwakenAction } from '../core/Action.js';
+import { AspectIcons } from './AspectIcons.js';
 
 export class AspectPalette {
   constructor(container, gameState, gameEngine) {
@@ -93,12 +94,15 @@ export class AspectPalette {
     if (isSelected) classes.push('selected');
     if (!isAwakened && !canAfford) classes.push('disabled');
 
+    const iconColor = isAwakened ? aspect.color : 'rgba(255,255,255,0.2)';
+    const svgIcon = AspectIcons.getSVG(aspect.id, iconColor, 20);
+
     return `
       <button class="${classes.join(' ')}" 
               data-id="${aspect.id}" 
               data-awakened="${isAwakened}"
               title="${aspect.name}: ${aspect.description}">
-        <span class="aspect-symbol" style="color: ${isAwakened ? aspect.color : 'rgba(255,255,255,0.2)'}">${aspect.symbol}</span>
+        <span class="aspect-symbol">${svgIcon}</span>
         ${!isAwakened ? `<span class="lock-icon">🔒</span>` : ''}
       </button>
     `;
