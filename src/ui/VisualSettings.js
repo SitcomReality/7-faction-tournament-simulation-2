@@ -28,8 +28,13 @@ export class VisualSettings {
       </div>
       
       <div class="setting-row" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-subtle);">
-        <span>Map Orientation</span>
-        <button id="rotate-btn" style="padding: 4px 12px; font-size: 10px;">🔄 Rotate View</button>
+        <span>Orientation</span>
+        <button id="rotate-btn" style="padding: 4px 12px; font-size: 10px;">🔄 Rotate</button>
+      </div>
+
+      <div class="setting-row" style="margin-top: 8px;">
+        <span>Session</span>
+        <button id="reset-game-btn" style="padding: 4px 12px; font-size: 10px; background: rgba(255, 82, 82, 0.1); border-color: #FF5252; color: #FF5252;">⚠️ New Game</button>
       </div>
     `;
     
@@ -53,6 +58,13 @@ export class VisualSettings {
     const rotateBtn = document.getElementById('rotate-btn');
     rotateBtn.addEventListener('click', () => {
       this.gameState.toggleHexRotation();
+    });
+
+    const resetBtn = document.getElementById('reset-game-btn');
+    resetBtn.addEventListener('click', () => {
+      if (confirm('Abandon current sacred rite and return to setup?')) {
+        location.reload(); // Simplest way to full reset systems
+      }
     });
   }
 }

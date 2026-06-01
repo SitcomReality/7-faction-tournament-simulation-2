@@ -338,30 +338,80 @@ export class Renderer2D {
     const aspect = ASPECTS[aspectId];
     if (!aspect) return;
 
-    // Pulsing divine glow
     const pulse = Math.sin(Date.now() * 0.002) * 0.3 + 0.7;
     
-    // Outer glow ring
+    // 1. Draw Divine Halo
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.globalAlpha = 0.4 * pulse * alpha;
     ctx.strokeStyle = aspect.color;
     ctx.lineWidth = 2;
-    ctx.globalAlpha = 0.4 * pulse * alpha;
     ctx.beginPath();
-    ctx.arc(x, y, 12, 0, Math.PI * 2);
+    ctx.arc(0, 0, 14, 0, Math.PI * 2);
     ctx.stroke();
+
+    // 2. Draw Aspect Symbol with Radiance
     ctx.globalAlpha = alpha;
-    
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.font = 'bold 18px Space Mono';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    
-    // Divine radiance
     ctx.shadowColor = aspect.color;
-    ctx.shadowBlur = 12 * pulse;
-    ctx.fillText(aspect.symbol, x, y);
-    ctx.shadowBlur = 0;
+    ctx.shadowBlur = 15 * pulse;
     
-    ctx.globalAlpha = 1.0;
+    this.drawSacredGeometry(ctx, aspectId, 8);
+    
+    ctx.restore();
+  }
+
+  /**
+   * Renders a unique geometric sigil for each Divine Aspect
+   */
+  drawSacredGeometry(ctx, id, size) {
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+
+    switch(id) {
+      case 0: // Radiance: Sun-like circle with 4 outer points
+        ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2);
+        for(let i=0; i<4; i++) {
+          const a = i * Math.PI/2;
+          ctx.moveTo(Math.cos(a)*size*0.8, Math.sin(a)*size*0.8);
+          ctx.lineTo(Math.cos(a)*size*1.2, Math.sin(a)*size*1.2);
+        }
+        break;
+      case 1: // Umbra: Double crescent
+        ctx.arc(-size*0.3, 0, size * 0.8, -Math.PI*0.4, Math.PI*0.4);
+        ctx.arc(-size*0.7, 0, size * 0.8, Math.PI*0.3, -Math.PI*0.3, true);
+        break;
+      case 2: // Tempest: Triple zigzag bolt
+        ctx.moveTo(-size*0.5, -size*0.8);
+        ctx.lineTo(size*0.3, -size*0.2);
+        ctx.lineTo(-size*0.3, size*0.2);
+        ctx.lineTo(size*0.5, size*0.8);
+        break;
+      case 3: // Terra: Square with inner cross
+        ctx.rect(-size*0.7, -size*0.7, size*1.4, size*1.4);
+        ctx.moveTo(-size*0.4, 0); ctx.lineTo(size*0.4, 0);
+        ctx.moveTo(0, -size*0.4); ctx.lineTo(0, size*0.4);
+        break;
+      case 4: // Pyre: Diamond with central point
+        ctx.moveTo(0, -size); ctx.lineTo(size, 0); ctx.lineTo(0, size); ctx.lineTo(-size, 0); ctx.closePath();
+        ctx.moveTo(0, -size*0.2); ctx.lineTo(0, size*0.2);
+        break;
+      case 5: // Tide: Triple waves
+        for(let i=-1; i<=1; i++) {
+          const dy = i * size * 0.5;
+          ctx.moveTo(-size*0.8, dy);
+          ctx.bezierCurveTo(-size*0.4, dy-size*0.4, size*0.4, dy+size*0.4, size*0.8, dy);
+        }
+        break;
+      case 6: // Aether: Concentric Hex/Circle
+        ctx.arc(0, 0, size, 0, Math.PI * 2);
+        ctx.moveTo(size*0.4, 0);
+        ctx.arc(0, 0, size*0.4, 0, Math.PI * 2);
+        break;
+    }
+    ctx.stroke();
   }
 
   // Bridged for main.js
