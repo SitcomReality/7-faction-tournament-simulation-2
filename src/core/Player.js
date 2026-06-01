@@ -9,8 +9,8 @@ export class Player {
     this.isAI = isAI;
     this.difficulty = difficulty; // 'easy', 'medium', 'hard'
     
-    // Awakened Divine Aspects (start with Triad of Foundation: 0, 1, 2)
-    this.awakenedAspects = new Set([0, 1, 2]);
+    // Awakened Divine Aspects (start with Triad of Foundation: Radiance, Umbra, Terra -> ids 0, 1, 3)
+    this.awakenedAspects = new Set([0, 1, 3]);
     
     // Owned territories (Sanctums)
     this.territories = new Set();
