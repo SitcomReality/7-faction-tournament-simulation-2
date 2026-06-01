@@ -5,6 +5,7 @@ import { Camera } from './Camera.js';
 import { HexRenderer } from './HexRenderer.js';
 import { InteractionManager } from './InteractionManager.js';
 import { ASPECTS } from '../core/DivineAspect.js';
+import { AspectIcons } from '../ui/AspectIcons.js';
 
 export class Renderer2D {
   constructor(canvas, fxCanvas, audio) {
@@ -19,6 +20,14 @@ export class Renderer2D {
     this.particles = [];
     this.hexRenderer = new HexRenderer();
     this.interaction = new InteractionManager(this, this.camera, this.canvas);
+    
+    this.fogDirty = true;
+    this.lastFogPlayer = null;
+    this.lastGrid = null;
+    
+    document.addEventListener('actionExecuted', () => this.fogDirty = true);
+    document.addEventListener('turnAdvanced', () => this.fogDirty = true);
+    document.addEventListener('fogOfWarToggled', () => this.fogDirty = true);
 
     this.setupCanvas();
   }
@@ -55,7 +64,12 @@ export class Renderer2D {
 
     // 2. Update visibility if fog enabled
     if (gameState.fogOfWarEnabled && grid) {
-      this.updateFogOfWar(grid, gameState);
+      if (this.fogDirty || this.lastFogPlayer !== gameState.activePlayer || this.lastGrid !== grid) {
+        this.updateFogOfWar(grid, gameState);
+        this.fogDirty = false;
+        this.lastFogPlayer = gameState.activePlayer;
+        this.lastGrid = grid;
+      }
     }
 
     // 3. Setup transforms
@@ -283,11 +297,9 @@ export class Renderer2D {
   getBaseCellColor(cell, gameState) {
     if (cell.type === 'ocean') return gameState.theme.ocean;
     
-    if (cell.unitType !== null) {
-        return gameState.theme.factions[cell.unitType] || gameState.theme.neutral;
-    }
     if (cell.owner !== null) {
-        return gameState.theme.factions[cell.owner] || gameState.theme.neutral;
+        const player = gameState.players[cell.owner];
+        return player ? player.color : gameState.theme.neutral;
     }
     
     return gameState.theme.neutral;
@@ -334,34 +346,55 @@ export class Renderer2D {
     }
   }
 
-  drawUnit(ctx, x, y, aspectId, alpha = 1) {
-    const aspect = ASPECTS[aspectId];
-    if (!aspect) return;
+  initIconCache() {
+    this.iconCache = new Map();
+    for (let i = 0; i < ASPECTS.length; i++) {
+      const aspect = ASPECTS[i];
+      const canvas = document.createElement('canvas');
+      const size = 64; // High res base
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const center = size / 2;
+      
+      // Draw background halo/circle
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.beginPath();
+      ctx.arc(center, center, 24, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.strokeStyle = aspect.color;
+      ctx.lineWidth = 3;
+      ctx.stroke();
 
-    const pulse = Math.sin(Date.now() * 0.002) * 0.3 + 0.7;
-    
-    // 1. Draw Divine Halo
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.globalAlpha = 0.4 * pulse * alpha;
-    ctx.strokeStyle = aspect.color;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, 0, 14, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // 2. Draw Aspect Symbol with Radiance
-    ctx.globalAlpha = alpha;
-    ctx.shadowColor = aspect.color;
-    ctx.shadowBlur = 15 * pulse;
-    
-    import('../ui/AspectIcons.js').then(({ AspectIcons }) => {
+      // Draw Symbol
       ctx.save();
-      ctx.translate(x, y);
+      ctx.translate(center, center);
+      ctx.shadowColor = aspect.color;
+      ctx.shadowBlur = 6;
       ctx.strokeStyle = 'white';
-      AspectIcons.draw(ctx, aspectId, 8);
+      AspectIcons.draw(ctx, i, 12);
       ctx.restore();
-    });
+      
+      this.iconCache.set(i, canvas);
+    }
+  }
+
+  drawUnit(ctx, x, y, aspectId, alpha = 1) {
+    if (!this.iconCache) this.initIconCache();
+    const icon = this.iconCache.get(aspectId);
+    if (!icon) return;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    
+    // Gentle pulse scale
+    const pulse = Math.sin(Date.now() * 0.003) * 0.05 + 1;
+    ctx.translate(x, y);
+    ctx.scale(pulse, pulse);
+    
+    const size = 48; // Draw size (adjust as needed to make it very clear)
+    ctx.drawImage(icon, -size/2, -size/2, size, size);
     
     ctx.restore();
   }

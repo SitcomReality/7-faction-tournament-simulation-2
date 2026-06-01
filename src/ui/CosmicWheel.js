@@ -96,10 +96,14 @@ export class CosmicWheel {
   render() {
     if (!this.ctx) return;
     const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.size, this.size);
     
-    // Request animation frame for pulsing effect
-    requestAnimationFrame(() => this.render());
+    // Cancel previous frame to prevent multiple loops
+    if (this.animationFrame) {
+      cancelAnimationFrame(this.animationFrame);
+    }
+    this.animationFrame = requestAnimationFrame(() => this.render());
+
+    ctx.clearRect(0, 0, this.size, this.size);
     
     const activeNode = this.hoveredNode;
     const highlightedEdges = [];

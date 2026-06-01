@@ -13,6 +13,7 @@ import { WorldController } from './WorldController.js';
 import { DebugTools } from '../utils/DebugTools.js';
 import { AudioManager } from '../rendering/AudioManager.js';
 import { GameSetup } from '../ui/GameSetup.js';
+import { ASPECTS } from './DivineAspect.js';
 
 export class SystemOrchestrator {
   constructor() {
@@ -130,12 +131,10 @@ export class SystemOrchestrator {
     document.addEventListener('aspectManifested', (e) => {
       const { q, r, aspectId } = e.detail;
       const pos = this.worldController.grid.hexToPixel(q, r, this.gameState.hexRotation);
-      import('../core/DivineAspect.js').then(({ ASPECTS }) => {
-        const aspect = ASPECTS[aspectId];
-        if (aspect && this.renderer) {
-          this.renderer.spawnParticles(pos.x, pos.y, aspect.color);
-        }
-      });
+      const aspect = ASPECTS[aspectId];
+      if (aspect && this.renderer) {
+        this.renderer.spawnParticles(pos.x || 0, pos.y || 0, aspect.color);
+      }
     });
 
     document.addEventListener('actionExecuted', (e) => {
