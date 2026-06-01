@@ -17,7 +17,8 @@ export class GameSetup {
       mapSize: 14,
       gridType: 'hexagonal',
       mapType: 'land',
-      boundaryShape: 'circular'
+      boundaryShape: 'circular',
+      victoryCondition: 'ascension'
     };
   }
 
@@ -93,8 +94,20 @@ export class GameSetup {
           </div>
         </div>
 
+        <div class="setup-section">
+          <div class="setup-section-title">Victory Condition</div>
+          <div class="setting-row">
+            <select id="setup-victory-condition" style="width: 100%;">
+              <option value="ascension" ${this.config.victoryCondition === 'ascension' ? 'selected' : ''}>Ascension (Control 50% Sanctums)</option>
+              <option value="omniscience" ${this.config.victoryCondition === 'omniscience' ? 'selected' : ''}>Divine Omniscience (Awaken All Aspects)</option>
+              <option value="elimination" ${this.config.victoryCondition === 'elimination' ? 'selected' : ''}>Last House Standing</option>
+            </select>
+          </div>
+        </div>
+
         <div class="setup-actions">
-          <button class="setup-btn primary" id="start-game-btn">Begin Sacred Rite</button>
+          <button class="setup-btn" id="quick-start-btn" style="flex: 0.5;">Quick Start</button>
+          <button class="setup-btn primary" id="start-game-btn" style="flex: 1;">Begin Sacred Rite</button>
         </div>
       </div>
     `;
@@ -152,8 +165,18 @@ export class GameSetup {
       this.config.boundaryShape = e.target.value;
     });
 
+    document.getElementById('setup-victory-condition').addEventListener('change', (e) => {
+      this.config.victoryCondition = e.target.value;
+    });
+
     document.getElementById('start-game-btn').addEventListener('click', () => {
       this.collectPlayerData();
+      document.dispatchEvent(new CustomEvent('gameSetupComplete', { detail: this.config }));
+      this.hide();
+    });
+
+    document.getElementById('quick-start-btn').addEventListener('click', () => {
+      this.config = this.getDefaultConfig();
       document.dispatchEvent(new CustomEvent('gameSetupComplete', { detail: this.config }));
       this.hide();
     });

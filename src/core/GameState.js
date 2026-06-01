@@ -14,6 +14,8 @@ export class GameState {
     this.activePlayer = 0;
     this.currentTurn = 1;
     this.turnPhase = 'active'; // simplified turn phase
+    this.victoryCondition = 'ascension';
+    this.winner = null;
     
     // Fog of war toggle
     this.fogOfWarEnabled = false;

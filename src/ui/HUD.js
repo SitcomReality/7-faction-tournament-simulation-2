@@ -5,6 +5,7 @@ import { GenerationSettings } from './GenerationSettings.js';
 import { VisualSettings } from './VisualSettings.js';
 import { CosmicWheel } from './CosmicWheel.js';
 import { AspectPalette } from './AspectPalette.js';
+import { PlayersPanel } from './PlayersPanel.js';
 
 export class HUD {
   constructor(container, gameState, grid, gameEngine, worldGenerator, renderer, unitRelationships) {
@@ -18,6 +19,7 @@ export class HUD {
     
     this.visualSettings = null;
     this.generationSettings = null;
+    this.playersPanel = null;
     this.cosmicWheel = null;
     this.aspectPalette = null;
     this.isVisible = true;
@@ -50,11 +52,18 @@ export class HUD {
       this.worldGenerator,
       this.gameEngine
     );
+
+    this.playersPanel = new PlayersPanel(
+      document.getElementById('players-panel'),
+      this.gameState,
+      this.grid
+    );
   }
 
   updateGrid(newGrid) {
     this.grid = newGrid;
     if (this.generationSettings) this.generationSettings.grid = newGrid;
+    if (this.playersPanel) this.playersPanel.updateGrid(newGrid);
   }
 
   createLayout() {
@@ -81,12 +90,34 @@ export class HUD {
       <!-- Right Panel: Settings -->
       <div id="settings-window" class="hud-window right">
         <div class="hud-tabs">
-          <button class="tab-btn active" data-target="generation-settings">Map Gen</button>
+          <button class="tab-btn active" data-target="players-panel">Houses</button>
+          <button class="tab-btn" data-target="generation-settings">Map</button>
           <button class="tab-btn" data-target="visual-settings">Vis</button>
         </div>
         <div class="hud-panels-container">
-          <div id="generation-settings" class="hud-panel active"></div>
+          <div id="players-panel" class="hud-panel active"></div>
+          <div id="generation-settings" class="hud-panel"></div>
           <div id="visual-settings" class="hud-panel"></div>
+        </div>
+      </div>
+
+      <!-- Victory Screen -->
+      <div id="victory-screen" class="setup-screen hidden" style="z-index: 2000; background: rgba(5,5,8,0.95);">
+        <div class="setup-container" style="text-align: center; border: 1px solid var(--border-subtle); box-shadow: 0 0 40px rgba(255,215,0,0.2);">
+          <div class="setup-subtitle">The Sacred Rite Concludes</div>
+          <div class="setup-title" id="victory-player-name" style="margin: 24px 0; font-size: 32px; color: #FFD700;">Player Name Ascends</div>
+          <div style="margin-bottom: 32px; font-size: 14px; color: var(--text-primary);">Cosmic balance has been restored.</div>
+          <button id="victory-restart-btn" class="setup-btn primary">Begin Anew</button>
+        </div>
+      </div>
+
+      <!-- Handoff Screen -->
+      <div id="handoff-screen" class="setup-screen hidden" style="z-index: 2000; background: rgba(5,5,8,0.95);">
+        <div class="setup-container" style="text-align: center; border: 1px solid var(--border-subtle);">
+          <div class="setup-subtitle">The Wheel Turns</div>
+          <div class="setup-title" id="handoff-player-name" style="margin: 24px 0; font-size: 32px;">Player Name</div>
+          <div style="margin-bottom: 32px; font-size: 12px; color: var(--text-secondary);">Pass the device to the next Claimant.</div>
+          <button id="handoff-ready-btn" class="setup-btn primary">I Am Ready</button>
         </div>
       </div>
 
@@ -111,6 +142,18 @@ export class HUD {
   }
 
   attachEvents() {
+    // Victory Screen
+    const victoryScreen = document.getElementById('victory-screen');
+    document.getElementById('victory-restart-btn').addEventListener('click', () => {
+      location.reload();
+    });
+
+    // Handoff Screen
+    const handoffScreen = document.getElementById('handoff-screen');
+    document.getElementById('handoff-ready-btn').addEventListener('click', () => {
+      handoffScreen.classList.add('hidden');
+    });
+
     // Settings tabs
     const settingsWindow = document.getElementById('settings-window');
     const tabs = settingsWindow.querySelectorAll('.tab-btn');
@@ -155,9 +198,27 @@ export class HUD {
       }
     });
 
+    // Listen for Game Over
+    document.addEventListener('gameOver', (e) => {
+      const winner = e.detail.winner;
+      document.getElementById('victory-player-name').textContent = `${winner.name} Ascends`;
+      document.getElementById('victory-player-name').style.color = winner.color;
+      document.getElementById('victory-screen').classList.remove('hidden');
+    });
+
     // Listen for turn updates
-    document.addEventListener('turnAdvanced', () => {
+    document.addEventListener('turnAdvanced', (e) => {
       this.updateTurnDisplay();
+      
+      const humanPlayers = this.gameState.players.filter(p => !p.isAI);
+      const nextPlayer = this.gameState.players[e.detail.activePlayer];
+      
+      // If hot-seat mode (multiple humans) and next player is human, show handoff
+      if (humanPlayers.length > 1 && !nextPlayer.isAI) {
+        document.getElementById('handoff-player-name').textContent = nextPlayer.name;
+        document.getElementById('handoff-player-name').style.color = nextPlayer.color;
+        document.getElementById('handoff-screen').classList.remove('hidden');
+      }
     });
     
     // Listen for actions executed

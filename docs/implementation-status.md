@@ -60,22 +60,21 @@ The Supernal Interregnum now has a fast, tactile core loop: you can Awaken Aspec
 
 ---
 
-## Phase 4: Claimant Houses System ⏸️ PARTIALLY EMERGED
+## Phase 4: Claimant Houses System 🚧 ALMOST COMPLETE
 
-**Status: Players exist and own territory, but House identity & UI are minimal.**
+**Status: Players exist and own territory, Houses UI implemented.**
 
 ✅ `Player` class represents a claimant with id, name, color, AI flag, territories, Essence, and awakened Aspects  
-✅ `GameEngine.createDefaultPlayers` creates two players by default with distinct colors  
+✅ `GameEngine.createDefaultPlayers` creates players with distinct colors and House names  
 ✅ `WorldController.setupWorld` assigns each player a random starting land cell with an initial manifested Aspect  
 ✅ Renderer colors owned cells and manifested Aspects using theme faction colors (`Renderer2D.getCellColor`)  
 ✅ Basic turn HUD shows active player name and global turn state  
+✅ Added a dedicated `PlayersPanel` showing each claimant's Essence, territories, awakened Aspects, and active state
+✅ Handoff/hot‑seat UX (basic "Pass device" overlay) implemented for multi-human play
 
 🚧 **To implement / improve:**
-- [ ] Flesh out distinct House lore/names from `lore.md` and apply them as player names/sigils
 - [ ] Separate "House color" from "Aspect color" more clearly in rendering (e.g., borders vs unit glyphs)
 - [ ] Implement more deliberate spawn algorithms (balanced distance, custom presets) instead of pure random land selection
-- [ ] Add a dedicated PlayerInfo / Houses panel showing each claimant's Essence, territories, awakened Aspects, and elimination state
-- [ ] Handoff/hot‑seat UX (basic "Pass device" overlay) once multi-human play is exposed
 
 **Design Note:** You're already halfway to Houses just by how ownership and Essence work; wrapping this in clear identity/UI will make the game vastly more readable.
 
@@ -150,7 +149,7 @@ The Supernal Interregnum now has a fast, tactile core loop: you can Awaken Aspec
 
 ## Phase 8: Ritual Configuration & Multiplayer Scaffolding 🚧 IN PROGRESS
 
-**Status:** Basic game setup screen is now implemented! Players can configure their sacred duel before starting.
+**Status:** Comprehensive game setup and hot-seat mode implemented.
 
 ✅ `GameSetup.js` component shows before game starts  
 ✅ Configure player count (2–7 Houses)  
@@ -159,12 +158,13 @@ The Supernal Interregnum now has a fast, tactile core loop: you can Awaken Aspec
 ✅ Configure map settings (grid type, map type, boundary shape, size)  
 ✅ "Begin Sacred Rite" button starts game with chosen configuration  
 ✅ Game engine and world controller accept player configs  
+✅ Quick start option to skip setup and jump into default 2-player game
+✅ Victory condition toggles (Ascension vs Divine Omniscience vs Last House) implemented in setup and GameEngine
+✅ Hot-seat privacy options ("Pass to Player X" overlay between turns) implemented in HUD
+✅ Game Over screen implemented
 
 🚧 **Remaining tasks:**
-- [ ] Add hot-seat privacy options ("Pass to Player X" overlay between turns)
-- [ ] Quick start option to skip setup and jump into default 2-player game
 - [ ] Starting territory / Essence balance presets
-- [ ] Victory condition toggles (Ascension vs Divine Omniscience vs Last House)
 - [ ] Implement game state serialization (export/import JSON)
 - [ ] Basic save/load from localStorage for in-progress games
 - [ ] Stub online systems (lobby, room codes, reconnection strategy)

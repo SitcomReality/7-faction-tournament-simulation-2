@@ -125,7 +125,9 @@ export class GameEngine {
   }
 
   endTurn(gameState, grid) {
-    return this.turnManager.endTurn(gameState, grid);
+    const result = this.turnManager.endTurn(gameState, grid);
+    this.checkVictoryConditions(gameState, grid);
+    return result;
   }
 
   executeAction(playerId, action, gameState, grid) {
@@ -134,10 +136,75 @@ export class GameEngine {
     if (action.validate(gameState) && action.canExecute(gameState, grid)) {
       action.execute(gameState, grid);
       
-      // Check win conditions or other triggers here
+      this.checkVictoryConditions(gameState, grid);
+      
       return true;
     }
     return false;
+  }
+
+  checkVictoryConditions(gameState, grid) {
+    if (gameState.winner !== null || !grid) return; // Already finished or no grid
+
+    const players = gameState.players;
+    let winner = null;
+
+    if (gameState.victoryCondition === 'omniscience') {
+      for (const p of players) {
+        if (p.awakenedAspects.size === 7) {
+          winner = p;
+          break;
+        }
+      }
+    } else if (gameState.victoryCondition === 'ascension') {
+      let totalClaimable = 0;
+      const territories = new Array(players.length).fill(0);
+      
+      for (const cell of grid.getAllCells()) {
+        if (cell.type === 'land' && cell.isClaimable) {
+          totalClaimable++;
+          if (cell.owner !== null) {
+            territories[cell.owner]++;
+          }
+        }
+      }
+      
+      if (totalClaimable > 0) {
+        for (let i = 0; i < players.length; i++) {
+          if (players[i].awakenedAspects.size >= 5 && (territories[i] / totalClaimable) >= 0.5) {
+            winner = players[i];
+            break;
+          }
+        }
+      }
+    } else if (gameState.victoryCondition === 'elimination') {
+      let aliveCount = 0;
+      let lastAlive = null;
+      
+      const territories = new Array(players.length).fill(0);
+      for (const cell of grid.getAllCells()) {
+        if (cell.owner !== null) {
+          territories[cell.owner]++;
+        }
+      }
+
+      for (let i = 0; i < players.length; i++) {
+        // A player is alive if they have territories, or it's early game (turn 1)
+        if (territories[i] > 0 || gameState.stats.turnCount < players.length) {
+          aliveCount++;
+          lastAlive = players[i];
+        }
+      }
+
+      if (aliveCount === 1 && gameState.stats.turnCount >= players.length) {
+        winner = lastAlive;
+      }
+    }
+
+    if (winner !== null) {
+      gameState.winner = winner;
+      document.dispatchEvent(new CustomEvent('gameOver', { detail: { winner } }));
+    }
   }
 
   reset() {

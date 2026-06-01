@@ -52,6 +52,7 @@ export class SystemOrchestrator {
     this.gameState.gridType = this.setupConfig.gridType;
     this.gameState.mapType = this.setupConfig.mapType;
     this.gameState.boundaryShape = this.setupConfig.boundaryShape;
+    this.gameState.victoryCondition = this.setupConfig.victoryCondition;
 
     const canvas = document.getElementById('main-canvas');
     const fxCanvas = document.getElementById('fx-canvas');
